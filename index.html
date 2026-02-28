@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>APEX RACER</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+/* ── Reset & base ─────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
+#c{width:100vw;height:100vh;display:block;touch-action:none}
+
+/* ── Loading screen ──────────────────────────────────────── */
+#loading{position:fixed;inset:0;background:#050505;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;transition:opacity 0.8s}
+#loading h1{font-size:56px;font-weight:900;color:#ff3300;letter-spacing:12px;text-shadow:0 0 50px #ff3300;margin-bottom:12px}
+#loading p{color:rgba(255,255,255,0.3);letter-spacing:5px;font-size:11px;font-family:'Share Tech Mono',monospace}
+#load-bar-bg{width:260px;height:2px;background:rgba(255,255,255,0.07);margin-top:28px;border-radius:1px;overflow:hidden}
+#load-bar{height:100%;width:0%;background:#ff3300;box-shadow:0 0 8px #ff3300;transition:width 0.3s}
+#load-status{margin-top:14px;font-size:10px;letter-spacing:4px;color:rgba(255,255,255,0.2);font-family:'Share Tech Mono',monospace;min-height:16px}
+
+/* ── Car select screen ───────────────────────────────────── */
+#car-select{
+  position:fixed;inset:0;background:rgba(3,3,6,0.97);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:200;transition:opacity 0.5s;
+}
+#car-select h1{
+  font-size:48px;font-weight:900;letter-spacing:14px;color:#fff;
+  text-shadow:0 0 40px rgba(255,51,0,0.6);margin-bottom:6px;
+}
+#car-select .subtitle{
+  font-size:10px;letter-spacing:6px;color:#ff7722;
+  font-family:'Share Tech Mono',monospace;margin-bottom:48px;
+}
+.car-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+  max-width:860px;width:100%;padding:0 24px;
+}
+.car-card{
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.03);
+  padding:24px 20px 20px;cursor:pointer;
+  transition:border-color 0.15s,background 0.15s,transform 0.12s;
+  position:relative;overflow:hidden;
+}
+.car-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,transparent 60%);
+  pointer-events:none;
+}
+.car-card:hover{
+  border-color:rgba(255,255,255,0.22);
+  background:rgba(255,255,255,0.06);
+  transform:translateY(-2px);
+}
+.car-card.selected{
+  border-color:var(--car-color,#ff3300);
+  background:rgba(255,255,255,0.07);
+  box-shadow:0 0 24px rgba(255,51,0,0.18),inset 0 0 24px rgba(255,51,0,0.06);
+}
+.car-card.selected::after{
+  content:'SELECTED';
+  position:absolute;top:10px;right:10px;
+  font-size:7px;letter-spacing:3px;color:var(--car-color,#ff3300);
+  font-family:'Share Tech Mono',monospace;
+}
+.car-name{font-size:28px;font-weight:900;letter-spacing:4px;color:#fff;margin-bottom:2px;}
+.car-sub{font-size:9px;letter-spacing:4px;color:rgba(255,255,255,0.35);font-family:'Share Tech Mono',monospace;margin-bottom:18px;}
+.car-dt-badge{
+  display:inline-block;font-size:8px;letter-spacing:3px;
+  padding:3px 8px;border:1px solid currentColor;
+  font-family:'Share Tech Mono',monospace;margin-bottom:18px;
+  color:var(--car-color,#ff3300);
+}
+.car-desc{
+  font-size:11px;color:rgba(255,255,255,0.45);line-height:1.7;
+  font-family:'Share Tech Mono',monospace;letter-spacing:0.5px;
+  margin-bottom:18px;min-height:52px;
+}
+.stat-row{display:flex;align-items:center;margin-bottom:7px;gap:8px;}
+.stat-name{font-size:8px;letter-spacing:3px;color:rgba(255,255,255,0.28);font-family:'Share Tech Mono',monospace;width:62px;flex-shrink:0;}
+.stat-track{flex:1;height:2px;background:rgba(255,255,255,0.07);}
+.stat-fill{height:100%;background:var(--car-color,#ff3300);transition:width 0.3s;}
+
+#start-btn, #map-start-btn{
+  margin-top:38px;padding:14px 56px;
+  background:transparent;border:1px solid #ff3300;
+  color:#ff3300;font-family:'Barlow Condensed',sans-serif;
+  font-size:15px;font-weight:900;letter-spacing:8px;cursor:pointer;
+  transition:background 0.15s,color 0.15s,box-shadow 0.15s;
+}
+#start-btn:hover, #map-start-btn:hover{
+  background:#ff3300;color:#fff;
+  box-shadow:0 0 32px rgba(255,51,0,0.4);
+}
+
+/* ── Map select screen ───────────────────────────────────── */
+#map-select{
+  position:fixed;inset:0;background:rgba(3,3,6,0.97);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  z-index:200;transition:opacity 0.4s;opacity:0;
+}
+#map-select h1{
+  font-size:48px;font-weight:900;letter-spacing:14px;color:#fff;
+  text-shadow:0 0 40px rgba(255,51,0,0.6);margin-bottom:6px;
+}
+#map-select .subtitle{
+  font-size:10px;letter-spacing:6px;color:#ff7722;
+  font-family:'Share Tech Mono',monospace;margin-bottom:48px;
+}
+.map-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:18px;
+  max-width:640px;width:100%;padding:0 24px;
+}
+.map-card{
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.03);
+  padding:28px 24px 22px;cursor:pointer;
+  transition:border-color 0.15s,background 0.15s,transform 0.12s;
+  position:relative;overflow:hidden;
+}
+.map-card:hover{
+  border-color:rgba(255,255,255,0.22);
+  background:rgba(255,255,255,0.06);
+  transform:translateY(-2px);
+}
+.map-card.selected{
+  border-color:#ff3300;
+  background:rgba(255,255,255,0.07);
+  box-shadow:0 0 24px rgba(255,51,0,0.18),inset 0 0 24px rgba(255,51,0,0.06);
+}
+.map-card.selected::after{
+  content:'SELECTED';position:absolute;top:10px;right:10px;
+  font-size:7px;letter-spacing:3px;color:#ff3300;
+  font-family:'Share Tech Mono',monospace;
+}
+.map-preview{
+  width:100%;height:130px;margin-bottom:18px;
+  display:flex;align-items:center;justify-content:center;
+}
+.map-preview svg{ width:100%;height:100%; }
+.map-name{font-size:24px;font-weight:900;letter-spacing:4px;color:#fff;margin-bottom:4px;}
+.map-sub{font-size:9px;letter-spacing:4px;color:rgba(255,255,255,0.35);font-family:'Share Tech Mono',monospace;margin-bottom:10px;}
+.map-desc{font-size:11px;color:rgba(255,255,255,0.45);line-height:1.7;font-family:'Share Tech Mono',monospace;letter-spacing:0.5px;}
+
+/* ── HUD ─────────────────────────────────────────────────── */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+#spd{position:absolute;bottom:28px;right:36px;text-align:right;line-height:1}
+#spd-val{font-size:80px;font-weight:900;color:#fff;letter-spacing:-3px;text-shadow:0 0 24px #ff3300,0 0 50px #ff220055}
+#spd-unit{font-size:13px;letter-spacing:8px;color:#ff7722;margin-top:-4px}
+#rpm-wrap{position:absolute;bottom:28px;left:36px;width:300px}
+#rpm-lbl{font-size:11px;letter-spacing:5px;color:#ff7722;margin-bottom:5px;font-family:'Share Tech Mono',monospace}
+#rpm-bg{width:100%;height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden}
+#rpm-bar{height:100%;width:0%;background:linear-gradient(90deg,#00ff88,#ffe600,#ff3300);border-radius:4px;transition:width 0.04s}
+#gear-lbl{position:absolute;bottom:104px;left:36px;font-size:11px;letter-spacing:5px;color:#00ff88;font-family:'Share Tech Mono',monospace}
+#gear{position:absolute;bottom:48px;left:36px;font-size:52px;font-weight:900;color:#fff;text-shadow:0 0 18px #00ff88}
+#lap-wrap{position:absolute;top:24px;left:36px}
+#lap-lbl{font-size:11px;letter-spacing:5px;color:#ff7722;font-family:'Share Tech Mono',monospace}
+#lap-time{font-size:32px;font-weight:900;color:#fff}
+/* Car name top-right */
+#car-hud{position:absolute;top:20px;right:36px;text-align:right}
+#title{font-size:20px;font-weight:900;letter-spacing:8px;color:#ff3300;text-shadow:0 0 24px #ff3300}
+#car-name{font-size:16px;font-weight:900;letter-spacing:4px;margin-top:4px}
+#car-dt{font-size:9px;letter-spacing:4px;color:rgba(255,255,255,0.3);font-family:'Share Tech Mono',monospace;margin-top:2px}
+/* ATTESSA bar */
+#attessa-wrap{position:absolute;bottom:90px;left:36px;width:220px;display:none}
+#attessa-lbl{font-size:9px;letter-spacing:4px;color:#ffe600;font-family:'Share Tech Mono',monospace;margin-bottom:4px}
+#attessa-bg{width:100%;height:5px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden}
+#attessa-bar{height:100%;width:0%;background:linear-gradient(90deg,#ffe600,#ff7722);border-radius:2px;transition:width 0.08s}
+/* Hints */
+#hints{position:absolute;bottom:88px;right:36px;text-align:right;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.28);line-height:2.2;font-family:'Share Tech Mono',monospace}
+/* Drift/air overlays */
+#drift{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(255,140,0,0.13) 0%,transparent 65%);opacity:0;transition:opacity 0.12s;pointer-events:none}
+#air{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:900;letter-spacing:6px;color:#ffe600;text-shadow:0 0 20px #ffe600;opacity:0;transition:opacity 0.2s;pointer-events:none}
+
+/* ── Settings button ─────────────────────────────────────── */
+#settings-btn{
+  position:fixed;top:20px;left:calc(50% - 90px);transform:translateX(-50%);z-index:50;
+  background:rgba(0,0,0,0.55);border:1px solid rgba(255,119,34,0.45);
+  color:#ff7722;font-family:'Share Tech Mono',monospace;font-size:10px;
+  letter-spacing:4px;padding:7px 18px;cursor:pointer;border-radius:2px;
+  pointer-events:all;transition:background 0.15s,border-color 0.15s;
+}
+#settings-btn:hover{background:rgba(255,119,34,0.15);border-color:#ff7722;}
+
+/* ── Settings panel ──────────────────────────────────────── */
+#settings-panel{
+  position:fixed;top:0;left:0;width:340px;height:100vh;
+  background:rgba(4,4,8,0.96);backdrop-filter:blur(12px);z-index:100;
+  transform:translateX(-100%);transition:transform 0.3s cubic-bezier(0.22,1,0.36,1);
+  border-right:1px solid rgba(255,119,34,0.2);overflow-y:auto;pointer-events:all;
+}
+#settings-panel.open{transform:translateX(0);}
+#sp-head{padding:28px 24px 16px;border-bottom:1px solid rgba(255,255,255,0.06);}
+#sp-head h2{font-size:22px;font-weight:900;color:#fff;letter-spacing:6px;margin:0;}
+#sp-head p{font-size:9px;letter-spacing:3px;color:#ff7722;font-family:'Share Tech Mono',monospace;margin-top:4px;}
+#sp-close{position:absolute;top:20px;right:20px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;cursor:pointer;line-height:1;}
+#sp-close:hover{color:#fff;}
+.sp-section{padding:14px 24px 6px;}
+.sp-section-title{font-size:9px;letter-spacing:4px;color:#ff7722;font-family:'Share Tech Mono',monospace;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,119,34,0.15);}
+.sp-section-title.cyan{color:#00e5ff;border-color:rgba(0,229,255,0.15);}
+.sp-section-title.green{color:#00ff88;border-color:rgba(0,255,136,0.15);}
+.sp-section-title.yellow{color:#ffe600;border-color:rgba(255,230,0,0.15);}
+.sp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+.sp-label{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.7);font-family:'Share Tech Mono',monospace;flex:1;}
+.sp-val{font-size:13px;font-weight:900;color:#fff;font-family:'Share Tech Mono',monospace;width:68px;text-align:right;}
+.sp-hint{font-size:8px;letter-spacing:1px;color:rgba(255,100,20,0.5);font-family:'Share Tech Mono',monospace;margin-bottom:3px;line-height:1.4;}
+.sp-hint.cyan{color:rgba(0,229,255,0.45);}
+.sp-hint.green{color:rgba(0,255,136,0.45);}
+.sp-hint.yellow{color:rgba(255,230,0,0.45);}
+.sp-slider{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:rgba(255,255,255,0.1);outline:none;border-radius:1px;cursor:pointer;margin:2px 0 12px;}
+.sp-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#ff3300;box-shadow:0 0 8px #ff3300;cursor:pointer;}
+.sp-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#ff3300;box-shadow:0 0 8px #ff3300;cursor:pointer;border:none;}
+.sp-slider.green::-webkit-slider-thumb{background:#00ff88;box-shadow:0 0 8px #00ff88;}
+.sp-slider.green::-moz-range-thumb{background:#00ff88;box-shadow:0 0 8px #00ff88;}
+.sp-slider.cyan::-webkit-slider-thumb{background:#00e5ff;box-shadow:0 0 8px #00e5ff;}
+.sp-slider.cyan::-moz-range-thumb{background:#00e5ff;box-shadow:0 0 8px #00e5ff;}
+.sp-slider.yellow::-webkit-slider-thumb{background:#ffe600;box-shadow:0 0 8px #ffe600;}
+.sp-slider.yellow::-moz-range-thumb{background:#ffe600;box-shadow:0 0 8px #ffe600;}
+
+/* ── Import modal ────────────────────────────────────────── */
+#import-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);pointer-events:all;
+}
+#import-modal.open{display:flex;}
+#import-box{
+  background:rgba(6,6,12,0.98);border:1px solid rgba(0,255,136,0.3);
+  width:360px;padding:24px;border-radius:3px;
+  box-shadow:0 0 40px rgba(0,255,136,0.1);
+}
+#import-box h3{
+  font-size:13px;font-weight:900;letter-spacing:5px;color:#00ff88;
+  font-family:'Share Tech Mono',monospace;margin-bottom:4px;
+}
+#import-box p{
+  font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.3);
+  font-family:'Share Tech Mono',monospace;margin-bottom:14px;line-height:1.7;
+}
+#import-textarea{
+  width:100%;height:160px;resize:vertical;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  color:#fff;font-family:'Share Tech Mono',monospace;font-size:10px;
+  padding:10px;border-radius:2px;outline:none;line-height:1.6;
+  transition:border-color 0.15s;
+}
+#import-textarea:focus{border-color:rgba(0,255,136,0.4);}
+#import-textarea.error{border-color:rgba(255,51,0,0.6);}
+#import-feedback{
+  font-size:9px;letter-spacing:2px;font-family:'Share Tech Mono',monospace;
+  min-height:14px;margin:8px 0 14px;line-height:1.5;
+}
+#import-feedback.ok{color:#00ff88;}
+#import-feedback.err{color:#ff3300;}
+.import-btns{display:flex;gap:8px;}
+#import-apply-btn{
+  flex:1;padding:10px;background:rgba(0,255,136,0.12);
+  border:1px solid rgba(0,255,136,0.4);color:#00ff88;
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  letter-spacing:3px;cursor:pointer;border-radius:2px;transition:background 0.15s;
+}
+#import-apply-btn:hover{background:rgba(0,255,136,0.22);}
+#import-cancel-btn{
+  padding:10px 16px;background:transparent;
+  border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  letter-spacing:3px;cursor:pointer;border-radius:2px;transition:background 0.15s;
+}
+#import-cancel-btn:hover{background:rgba(255,255,255,0.06);color:#fff;}
+
+/* ── Telemetry ───────────────────────────────────────────── */
+#telem{padding:12px 24px 20px;}
+#telem-title{font-size:9px;letter-spacing:4px;color:#00ff88;font-family:'Share Tech Mono',monospace;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(0,255,136,0.15);}
+.tel-row{display:flex;justify-content:space-between;margin-bottom:6px;}
+.tel-lbl{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.4);font-family:'Share Tech Mono',monospace;}
+.tel-val{font-size:9px;letter-spacing:1px;color:#fff;font-family:'Share Tech Mono',monospace;}
+.slip-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+.slip-cell{background:rgba(255,255,255,0.04);border-radius:2px;padding:6px 8px;}
+.slip-cell-lbl{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.3);font-family:'Share Tech Mono',monospace;margin-bottom:4px;}
+.slip-bg{width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden;}
+.slip-fill{height:100%;width:0%;background:#00ff88;border-radius:2px;transition:width 0.06s;}
+.slip-fill.over{background:#ff3300;}
+
+/* ── Controls button ─────────────────────────────────────── */
+#controls-btn{
+  position:fixed;top:20px;left:calc(50% + 90px);transform:none;z-index:50;
+  background:rgba(0,0,0,0.55);border:1px solid rgba(0,229,255,0.4);
+  color:#00e5ff;font-family:'Share Tech Mono',monospace;font-size:10px;
+  letter-spacing:4px;padding:7px 18px;cursor:pointer;border-radius:2px;
+  pointer-events:all;transition:background 0.15s,border-color 0.15s;
+}
+#controls-btn:hover{background:rgba(0,229,255,0.12);border-color:#00e5ff;}
+
+/* ── Controls modal ──────────────────────────────────────── */
+#controls-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.80);z-index:200;
+  display:none;align-items:flex-start;justify-content:center;
+  backdrop-filter:blur(6px);pointer-events:all;overflow-y:auto;
+  padding:40px 20px;
+}
+#controls-modal.open{display:flex;}
+#controls-box{
+  background:rgba(5,5,12,0.99);border:1px solid rgba(0,229,255,0.25);
+  width:100%;max-width:560px;border-radius:3px;
+  box-shadow:0 0 60px rgba(0,229,255,0.08);overflow:hidden;
+  flex-shrink:0;
+}
+#ctrl-head{
+  padding:24px 28px 14px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:space-between;
+}
+#ctrl-head h2{font-size:20px;font-weight:900;letter-spacing:6px;color:#fff;}
+#ctrl-head p{font-size:9px;letter-spacing:3px;color:#00e5ff;
+  font-family:'Share Tech Mono',monospace;margin-top:3px;}
+#ctrl-close{background:none;border:none;color:rgba(255,255,255,0.35);
+  font-size:20px;cursor:pointer;line-height:1;}
+#ctrl-close:hover{color:#fff;}
+.ctrl-section{padding:18px 28px 6px;}
+.ctrl-section-title{
+  font-size:9px;letter-spacing:4px;font-family:'Share Tech Mono',monospace;
+  margin-bottom:12px;padding-bottom:8px;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.ctrl-section-title.kb{color:#ff7722;border-color:rgba(255,119,34,0.2);}
+.ctrl-section-title.gp{color:#00e5ff;border-color:rgba(0,229,255,0.2);}
+.ctrl-section-title.opt{color:#ffe600;border-color:rgba(255,230,0,0.2);}
+/* Binding rows */
+.bind-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;padding:8px 10px;
+  background:rgba(255,255,255,0.03);border-radius:2px;
+  border:1px solid transparent;
+  transition:border-color 0.15s,background 0.15s;
+}
+.bind-row:hover{background:rgba(255,255,255,0.055);border-color:rgba(255,255,255,0.08);}
+.bind-row.waiting{
+  border-color:rgba(0,229,255,0.5);
+  background:rgba(0,229,255,0.06);
+  animation:bindpulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes bindpulse{
+  from{box-shadow:0 0 0 0 rgba(0,229,255,0);}
+  to  {box-shadow:0 0 12px 2px rgba(0,229,255,0.25);}
+}
+.bind-action{
+  font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.6);
+  font-family:'Share Tech Mono',monospace;flex:1;
+}
+.bind-keys{display:flex;gap:6px;align-items:center;}
+.bind-key{
+  font-size:10px;font-weight:900;letter-spacing:1px;
+  color:#fff;font-family:'Share Tech Mono',monospace;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);
+  padding:3px 8px;border-radius:2px;min-width:36px;text-align:center;
+  cursor:pointer;transition:background 0.1s,border-color 0.1s;
+}
+.bind-key:hover{background:rgba(255,119,34,0.18);border-color:rgba(255,119,34,0.5);color:#ff7722;}
+.bind-key.waiting{color:#00e5ff;background:rgba(0,229,255,0.12);border-color:#00e5ff;}
+.bind-key.secondary{opacity:0.5;}
+.bind-key.secondary:hover{opacity:1;}
+.bind-sep{font-size:8px;color:rgba(255,255,255,0.2);font-family:'Share Tech Mono',monospace;}
+/* Gamepad status */
+#gp-status{
+  font-size:9px;letter-spacing:2px;font-family:'Share Tech Mono',monospace;
+  padding:8px 10px;border-radius:2px;margin-bottom:12px;
+}
+#gp-status.connected{color:#00ff88;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);}
+#gp-status.disconnected{color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);}
+/* Deadzone slider */
+.dz-row{display:flex;align-items:center;gap:12px;padding:4px 0 12px;}
+.dz-label{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.5);
+  font-family:'Share Tech Mono',monospace;white-space:nowrap;}
+#dz-val{font-size:11px;font-weight:900;color:#fff;
+  font-family:'Share Tech Mono',monospace;width:36px;text-align:right;}
+#dz-slider{flex:1;-webkit-appearance:none;appearance:none;height:2px;
+  background:rgba(255,255,255,0.1);outline:none;border-radius:1px;cursor:pointer;}
+#dz-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+  border-radius:50%;background:#00e5ff;box-shadow:0 0 8px #00e5ff;cursor:pointer;}
+#dz-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+  background:#00e5ff;box-shadow:0 0 8px #00e5ff;cursor:pointer;border:none;}
+/* Footer */
+.ctrl-footer{
+  padding:16px 28px 22px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  display:flex;gap:10px;
+}
+#ctrl-reset-btn{
+  padding:9px 18px;background:transparent;
+  border:1px solid rgba(255,51,0,0.35);color:rgba(255,51,0,0.7);
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  letter-spacing:3px;cursor:pointer;border-radius:2px;transition:all 0.15s;
+}
+#ctrl-reset-btn:hover{background:rgba(255,51,0,0.1);color:#ff3300;border-color:#ff3300;}
+#ctrl-done-btn{
+  flex:1;padding:9px;background:rgba(0,229,255,0.1);
+  border:1px solid rgba(0,229,255,0.35);color:#00e5ff;
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  letter-spacing:4px;cursor:pointer;border-radius:2px;transition:all 0.15s;
+}
+#ctrl-done-btn:hover{background:rgba(0,229,255,0.2);}
+</style>
+</head>
+<body>
+
+<!-- ── Loading screen ──────────────────────────────────────── -->
+<div id="loading">
+  <h1>APEX RACER</h1>
+  <p>INITIALISING PHYSICS</p>
+  <div id="load-bar-bg"><div id="load-bar"></div></div>
+  <div id="load-status">LOADING HAVOK...</div>
+</div>
+
+<!-- ── Car select screen ───────────────────────────────────── -->
+<div id="car-select">
+  <h1>SELECT YOUR CAR</h1>
+  <p class="subtitle">CHOOSE YOUR WEAPON</p>
+
+  <div class="car-grid">
+
+    <!-- KATANA -->
+    <div class="car-card" data-car="katana" style="--car-color:#ff3300">
+      <div class="car-name" style="color:#ff3300">KATANA</div>
+      <div class="car-sub">LIGHTWEIGHT COUPE</div>
+      <div class="car-dt-badge" style="color:#ff3300">FR · REAR WHEEL DRIVE</div>
+      <div class="car-desc">Twitchy and fast to rotate. Snap oversteer on entry, unforgiving if you ignore the countersteer window. High risk, high reward.</div>
+      <div class="stat-row"><span class="stat-name">WEIGHT</span><div class="stat-track"><div class="stat-fill" style="width:30%;--car-color:#ff3300;background:#ff3300"></div></div></div>
+      <div class="stat-row"><span class="stat-name">POWER</span><div class="stat-track"><div class="stat-fill" style="width:60%;background:#ff3300"></div></div></div>
+      <div class="stat-row"><span class="stat-name">GRIP</span><div class="stat-track"><div class="stat-fill" style="width:55%;background:#ff3300"></div></div></div>
+      <div class="stat-row"><span class="stat-name">DRIFT</span><div class="stat-track"><div class="stat-fill" style="width:85%;background:#ff3300"></div></div></div>
+      <div class="stat-row"><span class="stat-name">STABILITY</span><div class="stat-track"><div class="stat-fill" style="width:35%;background:#ff3300"></div></div></div>
+    </div>
+
+    <!-- BRUISER -->
+    <div class="car-card" data-car="bruiser" style="--car-color:#ffe600">
+      <div class="car-name" style="color:#ffe600">BRUISER</div>
+      <div class="car-sub">AWD PERFORMANCE</div>
+      <div class="car-dt-badge" style="color:#ffe600">AWD · ATTESSA SYSTEM</div>
+      <div class="car-desc">Heavy, planted, powerful. ATTESSA torque transfer fights your drift. Commit hard to break it loose — when it slides it stays stable.</div>
+      <div class="stat-row"><span class="stat-name">WEIGHT</span><div class="stat-track"><div class="stat-fill" style="width:65%;background:#ffe600"></div></div></div>
+      <div class="stat-row"><span class="stat-name">POWER</span><div class="stat-track"><div class="stat-fill" style="width:90%;background:#ffe600"></div></div></div>
+      <div class="stat-row"><span class="stat-name">GRIP</span><div class="stat-track"><div class="stat-fill" style="width:88%;background:#ffe600"></div></div></div>
+      <div class="stat-row"><span class="stat-name">DRIFT</span><div class="stat-track"><div class="stat-fill" style="width:55%;background:#ffe600"></div></div></div>
+      <div class="stat-row"><span class="stat-name">STABILITY</span><div class="stat-track"><div class="stat-fill" style="width:80%;background:#ffe600"></div></div></div>
+    </div>
+
+    <!-- SPEC R -->
+    <div class="car-card" data-car="specr" style="--car-color:#00ff88">
+      <div class="car-name" style="color:#00ff88">SPEC R</div>
+      <div class="car-sub">FRONT WHEEL DRIVE</div>
+      <div class="car-dt-badge" style="color:#00ff88">FF · FRONT WHEEL DRIVE</div>
+      <div class="car-desc">Shouldn't drift. Does. Throttle pushes to understeer — use the handbrake and weight transfer. Scandinavian flick is your entry. Rewarding to master.</div>
+      <div class="stat-row"><span class="stat-name">WEIGHT</span><div class="stat-track"><div class="stat-fill" style="width:45%;background:#00ff88"></div></div></div>
+      <div class="stat-row"><span class="stat-name">POWER</span><div class="stat-track"><div class="stat-fill" style="width:55%;background:#00ff88"></div></div></div>
+      <div class="stat-row"><span class="stat-name">GRIP</span><div class="stat-track"><div class="stat-fill" style="width:70%;background:#00ff88"></div></div></div>
+      <div class="stat-row"><span class="stat-name">DRIFT</span><div class="stat-track"><div class="stat-fill" style="width:45%;background:#00ff88"></div></div></div>
+      <div class="stat-row"><span class="stat-name">STABILITY</span><div class="stat-track"><div class="stat-fill" style="width:65%;background:#00ff88"></div></div></div>
+    </div>
+
+  </div>
+  <button id="start-btn">START</button>
+</div>
+
+<!-- ── Map select screen ────────────────────────────────────── -->
+<div id="map-select">
+  <h1>SELECT TRACK</h1>
+  <p class="subtitle">CHOOSE YOUR ARENA</p>
+
+  <div class="map-grid">
+
+    <!-- FIGURE EIGHT -->
+    <div class="map-card" data-map="figure8">
+      <div class="map-preview">
+        <svg viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer figure-8 path -->
+          <path d="M 100 65 C 100 30, 160 10, 175 40 C 190 70, 160 105, 100 65 C 40 25, 10 60, 25 90 C 40 120, 100 105, 100 65"
+            stroke="rgba(255,255,255,0.12)" stroke-width="20" fill="none" stroke-linecap="round"/>
+          <!-- Inner figure-8 racing line -->
+          <path d="M 100 65 C 100 38, 152 18, 168 44 C 182 68, 152 98, 100 65 C 48 32, 18 62, 32 88 C 46 112, 98 98, 100 65"
+            stroke="#ff3300" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="4 3" opacity="0.8"/>
+          <!-- Crossover point indicator -->
+          <circle cx="100" cy="65" r="5" fill="#ff3300" opacity="0.9"/>
+          <!-- Start marker -->
+          <rect x="160" y="55" width="12" height="5" fill="#00ff88" opacity="0.9" rx="1"/>
+          <text x="156" y="50" fill="rgba(255,255,255,0.3)" font-size="7" font-family="monospace" letter-spacing="1">START</text>
+        </svg>
+      </div>
+      <div class="map-name">FIGURE EIGHT</div>
+      <div class="map-sub">GLB TRACK · CROSSOVER LAYOUT</div>
+      <div class="map-desc">Intersecting loops with a centre crossover. The crossing point is where it gets real — manage your speed or meet someone coming the other way.</div>
+    </div>
+
+    <!-- OVAL -->
+    <div class="map-card" data-map="oval">
+      <div class="map-preview">
+        <svg viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer oval -->
+          <ellipse cx="100" cy="65" rx="88" ry="52" stroke="rgba(255,255,255,0.12)" stroke-width="20" fill="none"/>
+          <!-- Inner oval racing line -->
+          <ellipse cx="100" cy="65" rx="72" ry="36" stroke="#ff7722" stroke-width="2.5" fill="none" stroke-dasharray="4 3" opacity="0.8"/>
+          <!-- Curb markers -->
+          <rect x="12" y="58" width="4" height="14" fill="#ff3300" opacity="0.7" rx="1"/>
+          <rect x="184" y="58" width="4" height="14" fill="#ff3300" opacity="0.7" rx="1"/>
+          <!-- Start line -->
+          <rect x="158" y="30" width="2" height="22" fill="#00ff88" opacity="0.9"/>
+          <text x="154" y="27" fill="rgba(255,255,255,0.3)" font-size="7" font-family="monospace" letter-spacing="1">START</text>
+          <!-- Direction arrow -->
+          <path d="M 100 22 L 115 28 L 100 34" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="map-name">OVAL</div>
+      <div class="map-sub">PROCEDURAL · CLOSED LOOP</div>
+      <div class="map-desc">Clean symmetrical oval with red-white curbs and barriers. No GLB required — built at runtime. Great for learning car behaviour and chasing clean laps.</div>
+    </div>
+
+  </div>
+  <button id="map-start-btn">RACE</button>
+</div>
+
+<!-- ── Settings button ─────────────────────────────────────── -->
+<button id="settings-btn">⚙ SETUP</button>
+<button id="controls-btn">⚑ CONTROLS</button>
+
+<!-- ── Settings panel ─────────────────────────────────────── -->
+<div id="settings-panel">
+  <div id="sp-head">
+    <h2>CAR SETUP</h2>
+    <p>PHYSICS PARAMETERS</p>
+    <button id="sp-close">✕</button>
+  </div>
+
+  <div class="sp-section">
+    <div class="sp-section-title">MASS & DISTRIBUTION</div>
+    <div class="sp-row"><span class="sp-label">TOTAL MASS</span><span class="sp-val" id="v-mass">700 kg</span></div>
+    <div class="sp-hint">200–2800 kg · stock varies per car</div>
+    <input type="range" class="sp-slider" id="s-mass" min="200" max="2800" value="700" step="10">
+    <div class="sp-row"><span class="sp-label">FRONT BIAS %</span><span class="sp-val" id="v-bias">45</span></div>
+    <div class="sp-hint">15–85% · lower = more oversteer</div>
+    <input type="range" class="sp-slider green" id="s-bias" min="15" max="85" value="45" step="1">
+  </div>
+
+  <div class="sp-section">
+    <div class="sp-section-title">TIRE MODEL (PACEJKA)</div>
+    <div class="sp-row"><span class="sp-label">STIFFNESS (B)</span><span class="sp-val" id="v-B">10.0</span></div>
+    <div class="sp-hint">2–40 · higher = sharper slip peak</div>
+    <input type="range" class="sp-slider" id="s-B" min="2" max="40" value="10" step="0.5">
+    <div class="sp-row"><span class="sp-label">SHAPE (C)</span><span class="sp-val" id="v-C">1.90</span></div>
+    <div class="sp-hint">0.5–5.0 · higher = rounder curve</div>
+    <input type="range" class="sp-slider" id="s-C" min="0.5" max="5.0" value="1.9" step="0.05">
+    <div class="sp-row"><span class="sp-label">PEAK GRIP (D)</span><span class="sp-val" id="v-D">1.00</span></div>
+    <div class="sp-hint">0.2–4.0 · scales all lateral force</div>
+    <input type="range" class="sp-slider" id="s-D" min="0.2" max="4.0" value="1.0" step="0.05">
+    <div class="sp-row"><span class="sp-label">CURVATURE (E)</span><span class="sp-val" id="v-E">0.97</span></div>
+    <div class="sp-hint">0.05–3.0 · >1 = wider plateau</div>
+    <input type="range" class="sp-slider green" id="s-E" min="0.05" max="3.0" value="0.97" step="0.01">
+  </div>
+
+  <div class="sp-section">
+    <div class="sp-section-title">SUSPENSION</div>
+    <div class="sp-row"><span class="sp-label">SPRING RATE</span><span class="sp-val" id="v-spring">32000</span></div>
+    <div class="sp-hint">4000–160000</div>
+    <input type="range" class="sp-slider" id="s-spring" min="4000" max="160000" value="32000" step="1000">
+    <div class="sp-row"><span class="sp-label">DAMPER</span><span class="sp-val" id="v-damper">2400</span></div>
+    <div class="sp-hint">200–12000</div>
+    <input type="range" class="sp-slider" id="s-damper" min="200" max="12000" value="2400" step="100">
+  </div>
+
+  <div class="sp-section">
+    <div class="sp-section-title">ENGINE</div>
+    <div class="sp-row"><span class="sp-label">ENGINE FORCE</span><span class="sp-val" id="v-eng">7200</span></div>
+    <div class="sp-hint">1000–40000 N</div>
+    <input type="range" class="sp-slider" id="s-eng" min="1000" max="40000" value="7200" step="100">
+    <div class="sp-row"><span class="sp-label">TIRE COMPOUND REAR</span><span class="sp-val" id="v-rgrip">0.65</span></div>
+    <div class="sp-hint">0.15–2.0 · rear axle grip coefficient</div>
+    <input type="range" class="sp-slider green" id="s-rgrip" min="0.15" max="2.0" value="0.65" step="0.01">
+  </div>
+
+  <div class="sp-section">
+    <div class="sp-section-title cyan">DYNAMICS</div>
+    <div class="sp-row"><span class="sp-label">ANGULAR DAMPING</span><span class="sp-val" id="v-angdamp">0.30</span></div>
+    <div class="sp-hint cyan">0–2.0 · chassis rotational drag</div>
+    <input type="range" class="sp-slider cyan" id="s-angdamp" min="0" max="2.0" value="0.30" step="0.01">
+    <div class="sp-row"><span class="sp-label">LINEAR DAMPING</span><span class="sp-val" id="v-lindamp">0.04</span></div>
+    <div class="sp-hint cyan">0–0.5 · global velocity drag</div>
+    <input type="range" class="sp-slider cyan" id="s-lindamp" min="0" max="0.5" value="0.04" step="0.005">
+    <div class="sp-row"><span class="sp-label">STEER RETURN</span><span class="sp-val" id="v-sret">3.0</span></div>
+    <div class="sp-hint cyan">0.5–12 · self-aligning torque speed</div>
+    <input type="range" class="sp-slider cyan" id="s-sret" min="0.5" max="12" value="3.0" step="0.1">
+    <div class="sp-row"><span class="sp-label">STEER INPUT SPD</span><span class="sp-val" id="v-sspd">3.0</span></div>
+    <div class="sp-hint cyan">0.5–10 · steering rack speed</div>
+    <input type="range" class="sp-slider cyan" id="s-sspd" min="0.5" max="10" value="3.0" step="0.1">
+    <div class="sp-row"><span class="sp-label">STEER MAX (rad)</span><span class="sp-val" id="v-smax">0.44</span></div>
+    <div class="sp-hint cyan">0.10–1.0 · lock-to-lock range</div>
+    <input type="range" class="sp-slider cyan" id="s-smax" min="0.10" max="1.0" value="0.44" step="0.01">
+    <div class="sp-row"><span class="sp-label">SLIP ANGLE THRESHOLD</span><span class="sp-val" id="v-dthresh">0.10</span></div>
+    <div class="sp-hint cyan">0.01–0.5 · rad · slide detection threshold</div>
+    <input type="range" class="sp-slider cyan" id="s-dthresh" min="0.01" max="0.5" value="0.10" step="0.01">
+    <div class="sp-row"><span class="sp-label">WEIGHT TRANSFER SCALE</span><span class="sp-val" id="v-latscale">0.38</span></div>
+    <div class="sp-hint cyan">0–1.0 · lateral load transfer coefficient</div>
+    <input type="range" class="sp-slider cyan" id="s-latscale" min="0" max="1.0" value="0.38" step="0.01">
+    <div class="sp-row"><span class="sp-label">CG HEIGHT</span><span class="sp-val" id="v-cgheight">0.44</span></div>
+    <div class="sp-hint cyan">0.2–1.2 m · centre of gravity height</div>
+    <input type="range" class="sp-slider cyan" id="s-cgheight" min="0.2" max="1.2" value="0.44" step="0.01">
+    <div class="sp-row"><span class="sp-label">HANDBRAKE FORCE</span><span class="sp-val" id="v-hbforce">24000</span></div>
+    <div class="sp-hint cyan">1000–60000 N · rear brake line pressure</div>
+    <input type="range" class="sp-slider cyan" id="s-hbforce" min="1000" max="60000" value="24000" step="500">
+    <div class="sp-row"><span class="sp-label">LOCKED WHEEL μk</span><span class="sp-val" id="v-hbmuk">0.92</span></div>
+    <div class="sp-hint cyan">0.1–1.5 · kinetic friction coefficient</div>
+    <input type="range" class="sp-slider cyan" id="s-hbmuk" min="0.1" max="1.5" value="0.92" step="0.01">
+    <div class="sp-row"><span class="sp-label">MAX YAW RATE</span><span class="sp-val" id="v-avcap">3.8</span></div>
+    <div class="sp-hint cyan">0.5–10 rad/s · chassis rotational inertia limit</div>
+    <input type="range" class="sp-slider cyan" id="s-avcap" min="0.5" max="10" value="3.8" step="0.1">
+  </div>
+
+  <div class="sp-section">
+    <div class="sp-section-title green">AERODYNAMICS</div>
+    <div class="sp-row"><span class="sp-label">DRAG COEFF</span><span class="sp-val" id="v-drag">0.48</span></div>
+    <div class="sp-hint green">0–2.0 · top speed limiter</div>
+    <input type="range" class="sp-slider green" id="s-drag" min="0" max="2.0" value="0.48" step="0.01">
+    <div class="sp-row"><span class="sp-label">DOWNFORCE COEFF</span><span class="sp-val" id="v-df">0.30</span></div>
+    <div class="sp-hint green">0–2.0</div>
+    <input type="range" class="sp-slider green" id="s-df" min="0" max="2.0" value="0.30" step="0.01">
+    <div class="sp-row"><span class="sp-label">DF ONSET KMH</span><span class="sp-val" id="v-dfmin">60</span></div>
+    <div class="sp-hint green">0–200 kmh · ramps in above this</div>
+    <input type="range" class="sp-slider green" id="s-dfmin" min="0" max="200" value="60" step="5">
+  </div>
+
+  <!-- ATTESSA section — hidden for non-AWD cars -->
+  <div class="sp-section" id="attessa-section" style="display:none">
+    <div class="sp-section-title yellow">ATTESSA · TORQUE TRANSFER</div>
+    <div class="sp-row"><span class="sp-label">MAX FRONT SPLIT</span><span class="sp-val" id="v-attessa-max">50%</span></div>
+    <div class="sp-hint yellow">0–100% · max torque to fronts</div>
+    <input type="range" class="sp-slider yellow" id="s-attessa-max" min="0" max="1.0" value="0.50" step="0.01">
+    <div class="sp-row"><span class="sp-label">SLIP THRESHOLD</span><span class="sp-val" id="v-attessa-thr">0.18</span></div>
+    <div class="sp-hint yellow">0–0.5 · rear slip that triggers AWD</div>
+    <input type="range" class="sp-slider yellow" id="s-attessa-thr" min="0" max="0.5" value="0.18" step="0.01">
+    <div class="sp-row"><span class="sp-label">RESPONSE SPEED</span><span class="sp-val" id="v-attessa-resp">0.12</span></div>
+    <div class="sp-hint yellow">0.01–0.5 · transfer lerp speed</div>
+    <input type="range" class="sp-slider yellow" id="s-attessa-resp" min="0.01" max="0.5" value="0.12" step="0.01">
+  </div>
+
+  <div class="sp-section">
+    <div class="sp-section-title" style="color:#fff;border-color:rgba(255,255,255,0.15)">EXPORT VALUES</div>
+    <div class="sp-hint" style="color:rgba(255,255,255,0.4);margin-bottom:8px">Copy all current params to send for code changes</div>
+    <button id="copy-params-btn" style="width:100%;padding:10px;background:rgba(255,51,0,0.12);border:1px solid rgba(255,51,0,0.4);color:#ff3300;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;border-radius:2px;transition:background 0.15s;">⧉ COPY ALL PARAMS</button>
+    <div id="copy-confirm" style="font-size:9px;letter-spacing:2px;color:#00ff88;font-family:'Share Tech Mono',monospace;margin-top:6px;opacity:0;transition:opacity 0.3s;text-align:center">COPIED TO CLIPBOARD</div>
+    <button id="import-params-btn" style="width:100%;margin-top:8px;padding:10px;background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.35);color:#00ff88;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;border-radius:2px;transition:background 0.15s;">⬇ IMPORT PARAMS</button>
+  </div>
+
+  <div id="telem">
+    <div id="telem-title">LIVE TELEMETRY</div>
+    <div class="tel-row"><span class="tel-lbl">FL LOAD</span><span class="tel-val" id="t-fl">0 N</span></div>
+    <div class="tel-row"><span class="tel-lbl">FR LOAD</span><span class="tel-val" id="t-fr">0 N</span></div>
+    <div class="tel-row"><span class="tel-lbl">RL LOAD</span><span class="tel-val" id="t-rl">0 N</span></div>
+    <div class="tel-row"><span class="tel-lbl">RR LOAD</span><span class="tel-val" id="t-rr">0 N</span></div>
+    <div id="telem-title" style="margin-top:12px;">SLIP ANGLES</div>
+    <div class="slip-grid">
+      <div class="slip-cell"><div class="slip-cell-lbl">FL</div><div class="slip-bg"><div class="slip-fill" id="sf-fl"></div></div></div>
+      <div class="slip-cell"><div class="slip-cell-lbl">FR</div><div class="slip-bg"><div class="slip-fill" id="sf-fr"></div></div></div>
+      <div class="slip-cell"><div class="slip-cell-lbl">RL</div><div class="slip-bg"><div class="slip-fill" id="sf-rl"></div></div></div>
+      <div class="slip-cell"><div class="slip-cell-lbl">RR</div><div class="slip-bg"><div class="slip-fill" id="sf-rr"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Controls modal ───────────────────────────────────────── -->
+<div id="controls-modal">
+  <div id="controls-box">
+    <div id="ctrl-head">
+      <div>
+        <h2>CONTROLS</h2>
+        <p>CLICK ANY KEY TO REBIND · BOTH SLOTS EDITABLE · ESC TO CANCEL</p>
+      </div>
+      <button id="ctrl-close">✕</button>
+    </div>
+
+    <!-- Keyboard bindings -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-title kb">KEYBOARD BINDINGS</div>
+      <div id="kb-bindings"><!-- generated by JS --></div>
+    </div>
+
+    <!-- Gamepad bindings -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-title gp">CONTROLLER</div>
+      <div id="gp-status" class="disconnected">NO CONTROLLER DETECTED</div>
+      <div id="gp-bindings"><!-- generated by JS --></div>
+    </div>
+
+    <!-- Options -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-title opt">OPTIONS</div>
+      <div class="dz-row">
+        <span class="dz-label">DEADZONE</span>
+        <input type="range" id="dz-slider" min="0.02" max="0.40" step="0.01" value="0.12">
+        <span id="dz-val">0.12</span>
+      </div>
+    </div>
+
+    <div class="ctrl-footer">
+      <button id="ctrl-reset-btn">↺ RESET DEFAULTS</button>
+      <button id="ctrl-done-btn">DONE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Import params modal ──────────────────────────────────── -->
+<div id="import-modal">
+  <div id="import-box">
+    <h3>IMPORT PARAMS</h3>
+    <p>PASTE JSON FROM COPY ALL PARAMS.<br>PARTIAL BLOBS OK — ONLY MATCHING KEYS ARE APPLIED.</p>
+    <textarea id="import-textarea" placeholder='{ "MASS": 780, "PAC_D": 2.1, ... }'></textarea>
+    <div id="import-feedback"></div>
+    <div class="import-btns">
+      <button id="import-apply-btn">⬇ APPLY</button>
+      <button id="import-cancel-btn">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Game canvas ─────────────────────────────────────────── -->
+<canvas id="c"></canvas>
+
+<!-- ── HUD ────────────────────────────────────────────────── -->
+<div id="hud">
+  <div id="car-hud">
+    <div id="title">APEX RACER</div>
+    <div id="car-name" style="color:#ff3300">KATANA</div>
+    <div id="car-dt">FR · REAR WHEEL DRIVE</div>
+  </div>
+  <div id="lap-wrap"><div id="lap-lbl">LAP</div><div id="lap-time">1 · 0:00.000</div></div>
+  <div id="rpm-wrap"><div id="rpm-lbl">RPM</div><div id="rpm-bg"><div id="rpm-bar"></div></div></div>
+  <div id="gear-lbl">GEAR</div>
+  <div id="gear">1</div>
+  <div id="spd"><div id="spd-val">0</div><div id="spd-unit">MPH</div></div>
+  <div id="attessa-wrap">
+    <div id="attessa-lbl">TORQUE SPLIT · FRONT</div>
+    <div id="attessa-bg"><div id="attessa-bar"></div></div>
+  </div>
+  <div id="hints">W / ↑ · THROTTLE<br>S / ↓ · BRAKE<br>A / D · STEER<br>SPACE · HANDBRAKE<br>R · RESET</div>
+  <div id="drift"></div>
+  <div id="air">AIR !</div>
+</div>
+
+<!-- ── Scripts — order matters ─────────────────────────────── -->
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="https://cdn.babylonjs.com/havok/HavokPhysics_umd.js"></script>
+<script src="input.js"></script>
+<script src="cars.js"></script>
+<script src="physics.js"></script>
+<script src="track.js"></script>
+<script src="main.js"></script>
+
+</body>
+</html>
