@@ -161,6 +161,9 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
 #lap-time{font-size:32px;font-weight:900;color:#fff}
 /* Car name top-right */
 #car-hud{position:absolute;top:20px;right:36px;text-align:right}
+#title-row{display:flex;align-items:center;justify-content:flex-end;gap:14px}
+#yzzy-link{font-size:11px;font-weight:700;letter-spacing:4px;color:rgba(0,232,122,0.5);font-family:'Share Tech Mono',monospace;text-decoration:none;transition:color 0.2s,background 0.2s;line-height:1;align-self:center;background:rgba(0,0,0,0.15);padding:4px 9px;border-radius:4px;pointer-events:all;cursor:pointer}
+#yzzy-link:hover{color:rgba(0,232,122,0.95);background:rgba(0,0,0,0.6)}
 #title{font-size:20px;font-weight:900;letter-spacing:8px;color:#ff3300;text-shadow:0 0 24px #ff3300}
 #car-name{font-size:16px;font-weight:900;letter-spacing:4px;margin-top:4px}
 #car-dt{font-size:9px;letter-spacing:4px;color:rgba(255,255,255,0.3);font-family:'Share Tech Mono',monospace;margin-top:2px}
@@ -727,7 +730,10 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
 <!-- ── HUD ────────────────────────────────────────────────── -->
 <div id="hud">
   <div id="car-hud">
-    <div id="title">APEX RACER</div>
+    <div id="title-row">
+      <a id="yzzy-link" href="https://yzzy.online" target="_blank">YZZY.ONLINE</a>
+      <div id="title">APEX RACER</div>
+    </div>
     <div id="car-name" style="color:#ff3300">KATANA</div>
     <div id="car-dt">FR · REAR WHEEL DRIVE</div>
   </div>
