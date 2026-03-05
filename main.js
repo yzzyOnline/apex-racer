@@ -176,6 +176,11 @@ const setBar    = p => { const e = document.getElementById('load-bar');    if (e
   // ── Spawn / respawn ───────────────────────────────────────
   function doRespawn() {
     if (!physBody || !track) return;
+    // Invalidate current lap — keep best times intact
+    lapStart  = -1;
+    allCpHit  = false;
+    nextCpIdx = 0;
+    refreshCpHighlight();
     physBody.disablePreStep = false;
     physBody.setLinearVelocity(B.Vector3.Zero());
     physBody.setAngularVelocity(B.Vector3.Zero());
@@ -270,12 +275,78 @@ const setBar    = p => { const e = document.getElementById('load-bar');    if (e
   const slipEls   = ['sf-fl','sf-fr','sf-rl','sf-rr'].map(id => document.getElementById(id));
   const PEAK_SLIP = 0.25;
 
-  // ── Lap timer ─────────────────────────────────────────────
-  let lap = 1, lapStart = performance.now(), crossedSF = false;
+  // ── Lap & checkpoint system ───────────────────────────────
+  let lap          = 1;
+  let lapStart     = -1;        // -1 = timer not yet started
+  let nextCpIdx    = 0;
+  let allCpHit     = false;     // true once all intermediate CPs have been hit this lap
+  let cpCooldown   = false;
+  let bestLap      = Infinity;
+  let lastLap      = Infinity;
+  let lapHistory   = [];
+  let best3Consec  = Infinity;
+
   const fmtTime = ms => {
+    if (!isFinite(ms)) return '--:--.---';
     const s = Math.floor(ms / 1000);
-    return `${lap} · ${Math.floor(s / 60)}:${String(s % 60).padStart(2,'0')}.${String(Math.floor(ms % 1000)).padStart(3,'0')}`;
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2,'0')}.${String(Math.floor(ms % 1000)).padStart(3,'0')}`;
   };
+
+  function flashBest(label, timeStr) {
+    const el = document.getElementById('best-flash');
+    if (!el) return;
+    el.textContent = `${label}  ${timeStr}`;
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0)';
+    clearTimeout(el._flashTimer);
+    el._flashTimer = setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(-8px)';
+    }, 3000);
+  }
+
+  function updateBestHUD() {
+    const llEl  = document.getElementById('last-lap-val');
+    const blEl  = document.getElementById('best-lap-val');
+    const b3El  = document.getElementById('best-3-val');
+    if (llEl) llEl.textContent = isFinite(lastLap)     ? fmtTime(lastLap)     : '--:--.---';
+    if (blEl) blEl.textContent = isFinite(bestLap)     ? fmtTime(bestLap)     : '--:--.---';
+    if (b3El) b3El.textContent = isFinite(best3Consec) ? fmtTime(best3Consec) : '--:--.---';
+  }
+
+  function onLapComplete(lapMs) {
+    lastLap = lapMs;
+    lapHistory.push(lapMs);
+    lap++;
+    let newBest = false;
+    if (lapMs < bestLap) {
+      bestLap = lapMs;
+      newBest = true;
+      flashBest('BEST LAP', fmtTime(bestLap));
+    }
+    if (lapHistory.length >= 3) {
+      const last3 = lapHistory.slice(-3).reduce((a, b) => a + b, 0);
+      if (last3 < best3Consec) {
+        best3Consec = last3;
+        if (!newBest) flashBest('BEST 3 LAPS', fmtTime(best3Consec));
+      }
+    }
+    updateBestHUD();
+  }
+
+  function refreshCpHighlight() {
+    if (!track || !track.checkpoints.length) return;
+    track.checkpoints.forEach((cp, i) => {
+      if (!cp.mesh.material) return;
+      if (i === 0) {
+        cp.mesh.material = (i === nextCpIdx)
+          ? track._sfMatActive : track._sfMatInactive;
+      } else {
+        cp.mesh.material = (i === nextCpIdx)
+          ? track._cpMatActive : track._cpMatInactive;
+      }
+    });
+  }
 
   // ── Manual fallback state ─────────────────────────────────
   let manVel = B.Vector3.Zero(), manHead = -Math.PI / 2, manSteer = 0;
@@ -377,18 +448,90 @@ const setBar    = p => { const e = document.getElementById('load-bar');    if (e
     camera.position.copyFrom(camPos);
     camera.setTarget(camTgt);
 
-    // ── Lap ──────────────────────────────────────────────
-    if (track && track.checkpoint) {
-      if (B.Vector3.Distance(cp, track.checkpoint.position) < 9) {
-        if (!crossedSF) { crossedSF = true; lap++; lapStart = now; }
-      } else { crossedSF = false; }
+    // ── Checkpoint & lap detection ────────────────────────
+    if (track && track.checkpoints.length > 0 && chassisMesh) {
+      const cps    = track.checkpoints;
+      const carP   = chassisMesh.absolutePosition;
+
+      const sfCp   = cps[0];
+      const sfDist = B.Vector3.Distance(carP, sfCp.mesh.position);
+      const sfR    = sfCp.mesh._triggerRadius || 8;
+
+      // ── S/F line — always checked regardless of nextCpIdx ──
+      if (sfDist < sfR && !cpCooldown) {
+        cpCooldown = true;
+        setTimeout(() => { cpCooldown = false; }, 800);
+
+        if (lapStart === -1) {
+          // Very first crossing — start clock, advance to CP1
+          lapStart  = now;
+          nextCpIdx = cps.length > 1 ? 1 : 0;
+          allCpHit  = cps.length === 1;
+          refreshCpHighlight();
+
+        } else if (!allCpHit) {
+          // Crossed S/F without completing all checkpoints — reset timer only
+          lapStart  = now;
+          nextCpIdx = cps.length > 1 ? 1 : 0;
+          allCpHit  = false;
+          refreshCpHighlight();
+
+        } else {
+          // Valid lap
+          const lapMs = now - lapStart;
+          lapStart    = now;
+          allCpHit    = false;
+          nextCpIdx   = cps.length > 1 ? 1 : 0;
+          onLapComplete(lapMs);
+          refreshCpHighlight();
+        }
+
+      // ── Intermediate checkpoints — only when it's the next required one ──
+      } else if (nextCpIdx > 0 && !cpCooldown) {
+        const nextCp = cps[nextCpIdx];
+        const dist   = B.Vector3.Distance(carP, nextCp.mesh.position);
+        const trigR  = nextCp.mesh._triggerRadius || 8;
+
+        if (dist < trigR) {
+          cpCooldown = true;
+          setTimeout(() => { cpCooldown = false; }, 600);
+
+          nextCpIdx++;
+          if (nextCpIdx >= cps.length) {
+            nextCpIdx = 0;
+            allCpHit  = true;
+          }
+          refreshCpHighlight();
+        }
+      }
+
+    } else if (track && track.checkpoint && !track.checkpoints.length) {
+      // ── Oval fallback — single trigger ───────────────────
+      const dist = B.Vector3.Distance(chassisMesh.absolutePosition, track.checkpoint.position);
+      if (dist < 9 && !cpCooldown) {
+        cpCooldown = true;
+        setTimeout(() => { cpCooldown = false; }, 1200);
+        if (lapStart !== -1) onLapComplete(now - lapStart);
+        lapStart = now;
+      }
     }
 
     // ── HUD updates ──────────────────────────────────────
     if (hudSpeed) hudSpeed.textContent = Math.round(state.speedKmh * 0.621371);
     if (hudRpm)   hudRpm.style.width   = (state.rpm / 8500 * 100) + '%';
     if (hudGear)  hudGear.textContent  = state.reversing ? 'R' : state.gear;
-    if (hudTime)  hudTime.textContent  = fmtTime(now - lapStart);
+    if (hudTime)  hudTime.textContent  = `${lap} · ${lapStart === -1 ? '0:00.000' : fmtTime(now - lapStart)}`;
+    const c3El = document.getElementById('curr-3-val');
+    if (c3El) {
+      if (lapStart === -1) {
+        c3El.textContent = '--:--.---';
+      } else {
+        const prev  = lapHistory.slice(-2);
+        const sum   = prev.reduce((a, b) => a + b, 0) + (now - lapStart);
+        const count = prev.length + 1;
+        c3El.textContent = fmtTime(sum) + (count < 3 ? ` (${count}/3)` : '');
+      }
+    }
     if (driftEl)  driftEl.style.opacity = state.drifting ? '1' : '0';
     if (airEl)    airEl.style.opacity   = state.inAir    ? '1' : '0';
 
@@ -859,9 +1002,18 @@ const setBar    = p => { const e = document.getElementById('load-bar');    if (e
     // Build the track, then spawn car once physics are ready.
     track = await buildTrack(scene, chosenMap, (resolvedTrack) => {
       track = resolvedTrack;
-      if (chosenMap !== 'figure8') buildGroundPlane();
+      if (chosenMap == 'oval') buildGroundPlane();
       if (wantChicanes) buildChicanes(scene, chosenMap);
       spawnCar(chosenCar);
+      // Give the vehicle the surface grip map so wheels know what they're on
+      if (vehicle && track.surfaces) vehicle.trackSurfaces = track.surfaces;
+      nextCpIdx = 0;
+      allCpHit  = false;
+      lapHistory = [];
+      lap = 1;
+      lapStart = -1;
+      refreshCpHighlight();
+      updateBestHUD();
       setStatus('READY'); setBar(100);
     });
   });

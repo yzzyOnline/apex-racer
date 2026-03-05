@@ -112,8 +112,8 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
   font-family:'Share Tech Mono',monospace;margin-bottom:48px;
 }
 .map-grid{
-  display:grid;grid-template-columns:repeat(2,1fr);gap:18px;
-  max-width:640px;width:100%;padding:0 24px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+  max-width:960px;width:100%;padding:0 24px;
 }
 .map-card{
   border:1px solid rgba(255,255,255,0.08);
@@ -160,6 +160,17 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
 #lap-wrap{position:absolute;top:24px;left:36px}
 #lap-lbl{font-size:11px;letter-spacing:5px;color:#ff7722;font-family:'Share Tech Mono',monospace}
 #lap-time{font-size:32px;font-weight:900;color:#fff}
+#best-wrap{position:absolute;top:100px;left:36px}
+.best-row{display:flex;gap:10px;align-items:baseline;margin-bottom:3px}
+.best-row-divider{height:1px;background:rgba(255,255,255,0.08);margin:4px 0;width:100%}
+.best-lbl{font-size:9px;letter-spacing:4px;color:rgba(255,119,34,0.5);font-family:'Share Tech Mono',monospace;width:54px}
+.best-row span:last-child{font-size:16px;font-weight:900;color:rgba(255,255,255,0.55);font-family:'Share Tech Mono',monospace}
+#best-flash{
+  position:absolute;top:72px;left:50%;transform:translateX(-50%) translateY(-8px);
+  font-size:14px;font-weight:900;letter-spacing:5px;color:#ffe600;
+  font-family:'Share Tech Mono',monospace;text-shadow:0 0 20px #ffe600;
+  opacity:0;transition:opacity 0.3s,transform 0.3s;pointer-events:none;white-space:nowrap;
+}
 /* Car name top-right */
 #car-hud{position:absolute;top:20px;right:36px;text-align:right}
 #title-row{display:flex;align-items:center;justify-content:flex-end;gap:14px}
@@ -332,7 +343,6 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
 .ctrl-section-title.kb{color:#ff7722;border-color:rgba(255,119,34,0.2);}
 .ctrl-section-title.gp{color:#00e5ff;border-color:rgba(0,229,255,0.2);}
 .ctrl-section-title.opt{color:#ffe600;border-color:rgba(255,230,0,0.2);}
-/* Binding rows */
 .bind-row{
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:8px;padding:8px 10px;
@@ -367,14 +377,12 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
 .bind-key.secondary{opacity:0.5;}
 .bind-key.secondary:hover{opacity:1;}
 .bind-sep{font-size:8px;color:rgba(255,255,255,0.2);font-family:'Share Tech Mono',monospace;}
-/* Gamepad status */
 #gp-status{
   font-size:9px;letter-spacing:2px;font-family:'Share Tech Mono',monospace;
   padding:8px 10px;border-radius:2px;margin-bottom:12px;
 }
 #gp-status.connected{color:#00ff88;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);}
 #gp-status.disconnected{color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);}
-/* Deadzone slider */
 .dz-row{display:flex;align-items:center;gap:12px;padding:4px 0 12px;}
 .dz-label{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.5);
   font-family:'Share Tech Mono',monospace;white-space:nowrap;}
@@ -386,7 +394,6 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
   border-radius:50%;background:#00e5ff;box-shadow:0 0 8px #00e5ff;cursor:pointer;}
 #dz-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
   background:#00e5ff;box-shadow:0 0 8px #00e5ff;cursor:pointer;border:none;}
-/* Footer */
 .ctrl-footer{
   padding:16px 28px 22px;
   border-top:1px solid rgba(255,255,255,0.06);
@@ -479,15 +486,11 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
     <div class="map-card" data-map="figure8">
       <div class="map-preview">
         <svg viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Outer figure-8 path -->
           <path d="M 100 65 C 100 30, 160 10, 175 40 C 190 70, 160 105, 100 65 C 40 25, 10 60, 25 90 C 40 120, 100 105, 100 65"
             stroke="rgba(255,255,255,0.12)" stroke-width="20" fill="none" stroke-linecap="round"/>
-          <!-- Inner figure-8 racing line -->
           <path d="M 100 65 C 100 38, 152 18, 168 44 C 182 68, 152 98, 100 65 C 48 32, 18 62, 32 88 C 46 112, 98 98, 100 65"
             stroke="#ff3300" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="4 3" opacity="0.8"/>
-          <!-- Crossover point indicator -->
           <circle cx="100" cy="65" r="5" fill="#ff3300" opacity="0.9"/>
-          <!-- Start marker -->
           <rect x="160" y="55" width="12" height="5" fill="#00ff88" opacity="0.9" rx="1"/>
           <text x="156" y="50" fill="rgba(255,255,255,0.3)" font-size="7" font-family="monospace" letter-spacing="1">START</text>
         </svg>
@@ -501,17 +504,12 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
     <div class="map-card" data-map="oval">
       <div class="map-preview">
         <svg viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Outer oval -->
           <ellipse cx="100" cy="65" rx="88" ry="52" stroke="rgba(255,255,255,0.12)" stroke-width="20" fill="none"/>
-          <!-- Inner oval racing line -->
           <ellipse cx="100" cy="65" rx="72" ry="36" stroke="#ff7722" stroke-width="2.5" fill="none" stroke-dasharray="4 3" opacity="0.8"/>
-          <!-- Curb markers -->
           <rect x="12" y="58" width="4" height="14" fill="#ff3300" opacity="0.7" rx="1"/>
           <rect x="184" y="58" width="4" height="14" fill="#ff3300" opacity="0.7" rx="1"/>
-          <!-- Start line -->
           <rect x="158" y="30" width="2" height="22" fill="#00ff88" opacity="0.9"/>
           <text x="154" y="27" fill="rgba(255,255,255,0.3)" font-size="7" font-family="monospace" letter-spacing="1">START</text>
-          <!-- Direction arrow -->
           <path d="M 100 22 L 115 28 L 100 34" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
         </svg>
       </div>
@@ -519,7 +517,29 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
       <div class="map-sub">PROCEDURAL · CLOSED LOOP</div>
       <div class="map-desc">Clean symmetrical oval with red-white curbs and barriers. No GLB required — built at runtime. Great for learning car behaviour and chasing clean laps.</div>
     </div>
-
+<!-- HOOKED CIRCUIT -->
+<div class="map-card" data-map="hooked">
+  <div class="map-preview">
+    <svg viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Track road -->
+      <path
+        d="M340 600 Q300 600 300 550 L300 150 Q300 80 420 80 Q540 80 540 160 L540 300 Q540 360 630 380 Q720 410 670 500 Q620 600 470 620 Q390 620 340 600"
+        stroke="rgba(255,255,255,0.18)" stroke-width="90" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Racing line -->
+      <path
+        d="M340 600 Q300 600 300 550 L300 150 Q300 80 420 80 Q540 80 540 160 L540 300 Q540 360 630 380 Q720 410 670 500 Q620 600 470 620 Q390 620 340 600"
+        stroke="#ff3300" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="20 15" opacity="0.9"/>
+      <!-- Start line -->
+      <rect x="285" y="480" width="6" height="60" fill="#00ff88" opacity="0.9"/>
+      <text x="228" y="476" fill="rgba(255,255,255,0.3)" font-size="28" font-family="monospace" letter-spacing="2">START</text>
+      <!-- Direction arrow -->
+      <path d="M290 180 L300 155 L310 180" stroke="rgba(255,255,255,0.3)" stroke-width="6" fill="none" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="map-name">HOOKED CIRCUIT</div>
+  <div class="map-sub">GLB TRACK · TECHNICAL LOOP</div>
+  <div class="map-desc">A sweeping hook layout with tight chicanes and red-white kerbs. Demands commitment on the long outer curve and precision through the inner hook.</div>
+</div>
   </div>
   <button id="map-start-btn">RACE</button>
 </div>
@@ -632,7 +652,6 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
     <input type="range" class="sp-slider green" id="s-dfmin" min="0" max="200" value="60" step="5">
   </div>
 
-  <!-- ATTESSA section — hidden for non-AWD cars -->
   <div class="sp-section" id="attessa-section" style="display:none">
     <div class="sp-section-title yellow">ATTESSA · TORQUE TRANSFER</div>
     <div class="sp-row"><span class="sp-label">MAX FRONT SPLIT</span><span class="sp-val" id="v-attessa-max">50%</span></div>
@@ -680,21 +699,15 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
       </div>
       <button id="ctrl-close">✕</button>
     </div>
-
-    <!-- Keyboard bindings -->
     <div class="ctrl-section">
       <div class="ctrl-section-title kb">KEYBOARD BINDINGS</div>
       <div id="kb-bindings"><!-- generated by JS --></div>
     </div>
-
-    <!-- Gamepad bindings -->
     <div class="ctrl-section">
       <div class="ctrl-section-title gp">CONTROLLER</div>
       <div id="gp-status" class="disconnected">NO CONTROLLER DETECTED</div>
       <div id="gp-bindings"><!-- generated by JS --></div>
     </div>
-
-    <!-- Options -->
     <div class="ctrl-section">
       <div class="ctrl-section-title opt">OPTIONS</div>
       <div class="dz-row">
@@ -703,7 +716,6 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
         <span id="dz-val">0.12</span>
       </div>
     </div>
-
     <div class="ctrl-footer">
       <button id="ctrl-reset-btn">↺ RESET DEFAULTS</button>
       <button id="ctrl-done-btn">DONE</button>
@@ -739,6 +751,14 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
     <div id="car-dt">FR · REAR WHEEL DRIVE</div>
   </div>
   <div id="lap-wrap"><div id="lap-lbl">LAP</div><div id="lap-time">1 · 0:00.000</div></div>
+  <div id="best-wrap">
+    <div class="best-row"><span class="best-lbl">LAST</span><span id="last-lap-val">--:--.---</span></div>
+    <div class="best-row"><span class="best-lbl">BEST LAP</span><span id="best-lap-val">--:--.---</span></div>
+    <div class="best-row best-row-divider"></div>
+    <div class="best-row"><span class="best-lbl">CURR 3</span><span id="curr-3-val">--:--.---</span></div>
+    <div class="best-row"><span class="best-lbl">BEST 3</span><span id="best-3-val">--:--.---</span></div>
+  </div>
+  <div id="best-flash"></div>
   <div id="rpm-wrap"><div id="rpm-lbl">RPM</div><div id="rpm-bg"><div id="rpm-bar"></div></div></div>
   <div id="gear-lbl">GEAR</div>
   <div id="gear">1</div>
