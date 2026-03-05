@@ -112,8 +112,8 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
   font-family:'Share Tech Mono',monospace;margin-bottom:48px;
 }
 .map-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
-  max-width:960px;width:100%;padding:0 24px;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:18px;
+  max-width:660px;width:100%;padding:0 24px;
 }
 .map-card{
   border:1px solid rgba(255,255,255,0.08);
@@ -145,6 +145,127 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
 .map-name{font-size:24px;font-weight:900;letter-spacing:4px;color:#fff;margin-bottom:4px;}
 .map-sub{font-size:9px;letter-spacing:4px;color:rgba(255,255,255,0.35);font-family:'Share Tech Mono',monospace;margin-bottom:10px;}
 .map-desc{font-size:11px;color:rgba(255,255,255,0.45);line-height:1.7;font-family:'Share Tech Mono',monospace;letter-spacing:0.5px;}
+
+#import-track-wrap{
+  margin-top:24px;display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+#import-track-btn{
+  padding:11px 36px;
+  background:transparent;border:1px solid rgba(255,255,255,0.2);
+  color:rgba(255,255,255,0.55);font-family:'Barlow Condensed',sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:6px;cursor:pointer;
+  transition:border-color 0.15s,color 0.15s,box-shadow 0.15s;
+}
+#import-track-btn:hover{
+  border-color:rgba(255,255,255,0.5);color:#fff;
+}
+#import-track-btn.loaded{
+  border-color:#00ff88;color:#00ff88;
+  box-shadow:0 0 18px rgba(0,255,136,0.15);
+}
+#import-track-name{
+  font-size:9px;letter-spacing:3px;color:#00ff88;
+  font-family:'Share Tech Mono',monospace;min-height:14px;
+}
+
+/* ── GLB import modal ────────────────────────────────────── */
+#glb-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.82);
+  display:none;align-items:center;justify-content:center;
+  z-index:300;backdrop-filter:blur(6px);
+}
+#glb-modal.open{ display:flex; }
+#glb-box{
+  width:min(780px,94vw);max-height:88vh;
+  background:rgba(6,6,10,0.98);border:1px solid rgba(255,255,255,0.1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+#glb-head{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:28px 28px 0;flex-shrink:0;
+}
+#glb-head h2{
+  font-size:28px;font-weight:900;letter-spacing:10px;color:#fff;margin-bottom:4px;
+}
+#glb-head p{
+  font-size:9px;letter-spacing:4px;color:#ff7722;
+  font-family:'Share Tech Mono',monospace;
+}
+#glb-close{
+  background:none;border:none;color:rgba(255,255,255,0.35);
+  font-size:18px;cursor:pointer;padding:0;line-height:1;margin-top:2px;
+  transition:color 0.15s;flex-shrink:0;
+}
+#glb-close:hover{ color:#fff; }
+#glb-body{
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;
+  padding:24px 28px 28px;overflow-y:auto;flex:1;
+}
+/* Drop zone */
+#glb-drop{
+  border:1.5px dashed rgba(255,255,255,0.18);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;padding:36px 20px;cursor:pointer;
+  transition:border-color 0.15s,background 0.15s;min-height:200px;
+  position:relative;
+}
+#glb-drop:hover,#glb-drop.dragover{
+  border-color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.03);
+}
+#glb-drop.dragover{ border-color:#ff3300;background:rgba(255,51,0,0.05); }
+#glb-drop-icon{
+  font-size:36px;opacity:0.4;pointer-events:none;
+}
+#glb-drop-title{
+  font-size:20px;font-weight:900;letter-spacing:6px;color:rgba(255,255,255,0.7);
+  pointer-events:none;
+}
+#glb-drop-sub{
+  font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.25);
+  font-family:'Share Tech Mono',monospace;pointer-events:none;
+}
+#glb-drop-name{
+  font-size:10px;letter-spacing:3px;color:#00ff88;
+  font-family:'Share Tech Mono',monospace;pointer-events:none;min-height:14px;
+}
+#glb-browse-btn{
+  margin-top:4px;padding:9px 24px;
+  background:transparent;border:1px solid rgba(255,255,255,0.15);
+  color:rgba(255,255,255,0.45);font-family:'Barlow Condensed',sans-serif;
+  font-size:12px;font-weight:700;letter-spacing:5px;cursor:pointer;
+  transition:border-color 0.15s,color 0.15s;
+}
+#glb-browse-btn:hover{ border-color:rgba(255,255,255,0.4);color:#fff; }
+/* Reference table */
+#glb-ref{ display:flex;flex-direction:column;gap:0; }
+#glb-ref-title{
+  font-size:10px;letter-spacing:5px;color:rgba(255,255,255,0.3);
+  font-family:'Share Tech Mono',monospace;margin-bottom:14px;
+}
+.glb-section{ margin-bottom:18px; }
+.glb-section-label{
+  font-size:8px;letter-spacing:4px;
+  font-family:'Share Tech Mono',monospace;
+  padding:3px 0 6px;margin-bottom:4px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.glb-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:0;
+  padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);
+  align-items:start;
+}
+.glb-row:last-child{ border-bottom:none; }
+.glb-name{
+  font-size:10px;font-family:'Share Tech Mono',monospace;
+  color:#fff;letter-spacing:0.5px;
+}
+.glb-name em{
+  font-style:normal;color:rgba(255,255,255,0.3);font-size:9px;
+}
+.glb-desc{
+  font-size:9px;color:rgba(255,255,255,0.35);
+  font-family:'Share Tech Mono',monospace;line-height:1.6;letter-spacing:0.3px;
+}
 
 /* ── HUD ─────────────────────────────────────────────────── */
 #hud{position:fixed;inset:0;pointer-events:none;z-index:10}
@@ -500,23 +621,7 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
       <div class="map-desc">Intersecting loops with a centre crossover. The crossing point is where it gets real — manage your speed or meet someone coming the other way.</div>
     </div>
 
-    <!-- OVAL -->
-    <div class="map-card" data-map="oval">
-      <div class="map-preview">
-        <svg viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="100" cy="65" rx="88" ry="52" stroke="rgba(255,255,255,0.12)" stroke-width="20" fill="none"/>
-          <ellipse cx="100" cy="65" rx="72" ry="36" stroke="#ff7722" stroke-width="2.5" fill="none" stroke-dasharray="4 3" opacity="0.8"/>
-          <rect x="12" y="58" width="4" height="14" fill="#ff3300" opacity="0.7" rx="1"/>
-          <rect x="184" y="58" width="4" height="14" fill="#ff3300" opacity="0.7" rx="1"/>
-          <rect x="158" y="30" width="2" height="22" fill="#00ff88" opacity="0.9"/>
-          <text x="154" y="27" fill="rgba(255,255,255,0.3)" font-size="7" font-family="monospace" letter-spacing="1">START</text>
-          <path d="M 100 22 L 115 28 L 100 34" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="map-name">OVAL</div>
-      <div class="map-sub">PROCEDURAL · CLOSED LOOP</div>
-      <div class="map-desc">Clean symmetrical oval with red-white curbs and barriers. No GLB required — built at runtime. Great for learning car behaviour and chasing clean laps.</div>
-    </div>
+
 <!-- HOOKED CIRCUIT -->
 <div class="map-card" data-map="hooked">
   <div class="map-preview">
@@ -541,7 +646,122 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
   <div class="map-desc">A sweeping hook layout with tight chicanes and red-white kerbs. Demands commitment on the long outer curve and precision through the inner hook.</div>
 </div>
   </div>
+  <div id="import-track-wrap">
+    <button id="import-track-btn">⬆ IMPORT TRACK · GLB</button>
+    <div id="import-track-name"></div>
+  </div>
   <button id="map-start-btn">RACE</button>
+</div>
+
+<!-- ── GLB import modal ──────────────────────────────────────── -->
+<div id="glb-modal">
+  <div id="glb-box">
+    <div id="glb-head">
+      <div>
+        <h2>IMPORT TRACK</h2>
+        <p>DROP A .GLB FILE · BLENDER OBJECT NAMING REFERENCE BELOW</p>
+      </div>
+      <button id="glb-close">✕</button>
+    </div>
+    <div id="glb-body">
+
+      <!-- Left: drop zone -->
+      <div id="glb-drop">
+        <div id="glb-drop-icon">⬆</div>
+        <div id="glb-drop-title">DRAG FILE HERE</div>
+        <div id="glb-drop-sub">ACCEPTS .GLB FORMAT</div>
+        <div id="glb-drop-name"></div>
+        <button id="glb-browse-btn">OR BROWSE FILES</button>
+        <input type="file" id="import-track-input" accept=".glb" style="display:none">
+      </div>
+
+      <!-- Right: naming reference -->
+      <div id="glb-ref">
+        <div id="glb-ref-title">BLENDER OBJECT NAMES</div>
+
+        <div class="glb-section">
+          <div class="glb-section-label" style="color:#ff7722">SPAWN POINTS</div>
+          <div class="glb-row">
+            <div class="glb-name">spawn.0</div>
+            <div class="glb-desc">Player start position. Rotation Y = facing direction.</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name">spawn.1 <em>…N</em></div>
+            <div class="glb-desc">Additional grid slots for AI or multiplayer.</div>
+          </div>
+        </div>
+
+        <div class="glb-section">
+          <div class="glb-section-label" style="color:#ff3300">CHECKPOINTS</div>
+          <div class="glb-row">
+            <div class="glb-name">checkpoint.01</div>
+            <div class="glb-desc">Start / finish line. Required for lap timing.</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name">checkpoint.02 <em>…N</em></div>
+            <div class="glb-desc">Intermediate triggers, ordered by suffix. Empty position + scale sets trigger box size.</div>
+          </div>
+        </div>
+
+        <div class="glb-section">
+          <div class="glb-section-label" style="color:#aaaaff">COLLISION WALLS</div>
+          <div class="glb-row">
+            <div class="glb-name">wall.<em>*</em></div>
+            <div class="glb-desc">Solid mesh collider. Friction 0.40, restitution 0.25.</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name">barrier.<em>*</em></div>
+            <div class="glb-desc">Alias for wall — same physics.</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name">fence.<em>*</em></div>
+            <div class="glb-desc">Alias for wall — same physics.</div>
+          </div>
+        </div>
+
+        <div class="glb-section">
+          <div class="glb-section-label" style="color:#00ff88">SURFACES</div>
+          <div class="glb-row">
+            <div class="glb-name">surface.asphalt.<em>*</em></div>
+            <div class="glb-desc">Tarmac. Friction 0.90 · grip 1.00</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name">surface.curb.<em>*</em></div>
+            <div class="glb-desc">Kerb strips. Friction 0.65 · restitution 0.30</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name">surface.gravel.<em>*</em></div>
+            <div class="glb-desc">Loose gravel. Friction 0.45 · grip 0.45</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name">surface.dirt.<em>*</em></div>
+            <div class="glb-desc">Off-road dirt. Friction 0.60 · grip 0.60</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name">surface.grass.<em>*</em></div>
+            <div class="glb-desc">Grass runoff. Friction 0.50 · grip 0.55</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name">surface.ice.<em>*</em></div>
+            <div class="glb-desc">Icy surface. Friction 0.12 · grip 0.12</div>
+          </div>
+          <div class="glb-row">
+            <div class="glb-name"><em>(anything else)</em></div>
+            <div class="glb-desc">Falls back to asphalt physics and material.</div>
+          </div>
+        </div>
+
+        <div class="glb-section">
+          <div class="glb-section-label" style="color:#ffdd44">MISC</div>
+          <div class="glb-row">
+            <div class="glb-name">racing_line</div>
+            <div class="glb-desc">Bezier / poly curve sampled into AI path. Not physical, not visible.</div>
+          </div>
+        </div>
+
+      </div><!-- /glb-ref -->
+    </div><!-- /glb-body -->
+  </div><!-- /glb-box -->
 </div>
 
 <!-- ── Settings button ─────────────────────────────────────── -->

@@ -75,19 +75,6 @@ const setBar    = p => { const e = document.getElementById('load-bar');    if (e
   sky.isPickable     = false;
   sky.material       = sm;
 
-  // ── Ground plane — oval only (GLB has its own terrain) ────
-  function buildGroundPlane() {
-    const ground = B.MeshBuilder.CreateGround('ground',
-      { width: 1000, height: 1000, subdivisions: 1 }, scene);
-    const gm = new B.StandardMaterial('groundMat', scene);
-    gm.diffuseColor  = new B.Color3(0.13, 0.38, 0.10);
-    gm.specularColor = new B.Color3(0, 0, 0);
-    ground.material   = gm;
-    ground.isPickable = false;
-    new B.PhysicsAggregate(ground, B.PhysicsShapeType.BOX,
-      { mass: 0, friction: 0.6, restitution: 0.02 }, scene);
-  }
-
   setStatus('SPAWNING CAR...'); setBar(78);
 
   // ── Car materials — one set per profile color ────────────
@@ -969,8 +956,58 @@ const setBar    = p => { const e = document.getElementById('load-bar');    if (e
   if (firstCard) { firstCard.classList.add('selected'); chosenCar = firstCard.dataset.car; }
 
   // ── Map select screen ──────────────────────────────────────
-  let chosenMap    = 'figure8';
-  let wantChicanes = false;
+  let chosenMap      = 'figure8';
+  let customTrackURL = null;
+  let wantChicanes   = false;
+
+  // ── Import track button ─────────────────────────────────
+  // ── Import track modal ──────────────────────────────────
+  const importTrackBtn   = document.getElementById('import-track-btn');
+  const importTrackName  = document.getElementById('import-track-name');
+  const glbModal         = document.getElementById('glb-modal');
+  const glbClose         = document.getElementById('glb-close');
+  const glbDrop          = document.getElementById('glb-drop');
+  const glbDropName      = document.getElementById('glb-drop-name');
+  const glbBrowseBtn     = document.getElementById('glb-browse-btn');
+  const importTrackInput = document.getElementById('import-track-input');
+
+  function openGlbModal() {
+    if (glbModal) glbModal.classList.add('open');
+  }
+  function closeGlbModal() {
+    if (glbModal) glbModal.classList.remove('open');
+  }
+  function applyTrackFile(file) {
+    if (!file || !file.name.toLowerCase().endsWith('.glb')) return;
+    if (customTrackURL) URL.revokeObjectURL(customTrackURL);
+    customTrackURL = URL.createObjectURL(file);
+    chosenMap = 'custom';
+    document.querySelectorAll('.map-card').forEach(c => c.classList.remove('selected'));
+    importTrackBtn.classList.add('loaded');
+    importTrackName.textContent  = file.name.toUpperCase();
+    if (glbDropName) glbDropName.textContent = file.name.toUpperCase();
+    closeGlbModal();
+  }
+
+  if (importTrackBtn) importTrackBtn.addEventListener('click', openGlbModal);
+  if (glbClose)       glbClose.addEventListener('click', closeGlbModal);
+  if (glbModal)       glbModal.addEventListener('click', e => { if (e.target === glbModal) closeGlbModal(); });
+
+  if (glbBrowseBtn)   glbBrowseBtn.addEventListener('click', e => { e.stopPropagation(); importTrackInput && importTrackInput.click(); });
+  if (glbDrop) {
+    glbDrop.addEventListener('click', () => importTrackInput && importTrackInput.click());
+    glbDrop.addEventListener('dragover',  e => { e.preventDefault(); glbDrop.classList.add('dragover'); });
+    glbDrop.addEventListener('dragleave', () => glbDrop.classList.remove('dragover'));
+    glbDrop.addEventListener('drop', e => {
+      e.preventDefault();
+      glbDrop.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      applyTrackFile(file);
+    });
+  }
+  if (importTrackInput) {
+    importTrackInput.addEventListener('change', () => applyTrackFile(importTrackInput.files[0]));
+  }
 
   document.querySelectorAll('.map-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -1000,9 +1037,8 @@ const setBar    = p => { const e = document.getElementById('load-bar');    if (e
     setStatus('LOADING TRACK...'); setBar(80);
 
     // Build the track, then spawn car once physics are ready.
-    track = await buildTrack(scene, chosenMap, (resolvedTrack) => {
+    track = await buildTrack(scene, chosenMap, customTrackURL, (resolvedTrack) => {
       track = resolvedTrack;
-      if (chosenMap == 'oval') buildGroundPlane();
       if (wantChicanes) buildChicanes(scene, chosenMap);
       spawnCar(chosenCar);
       // Give the vehicle the surface grip map so wheels know what they're on

@@ -1,8 +1,9 @@
 // =============================================================
 //  TRACK.JS — Track loading and default oval builder
 //
-//  buildTrack(scene, chosenMap, onPhysicsReady)
-//    — chosenMap: 'figure8' | 'oval' | 'hooked'
+//  buildTrack(scene, chosenMap, customTrackURL, onPhysicsReady)
+//    — chosenMap: 'figure8' | 'hooked' | 'custom'
+//    — customTrackURL: blob URL string (only used when chosenMap === 'custom')
 //    — onPhysicsReady(trackData) fires once physics are settled
 //
 //  GLB Naming Convention (Blender object names):
@@ -54,7 +55,12 @@ const SURFACE_DEFS = {
 };
 
 // ── buildTrack ───────────────────────────────────────────────
-async function buildTrack(scene, chosenMap, onPhysicsReady) {
+async function buildTrack(scene, chosenMap, customTrackURL, onPhysicsReady) {
+  // Support old 3-arg call signature (no customTrackURL)
+  if (typeof customTrackURL === 'function') {
+    onPhysicsReady  = customTrackURL;
+    customTrackURL  = null;
+  }
   const B = BABYLON;
 
   const cp = B.MeshBuilder.CreateBox('cp', { width: 20, height: 5, depth: 5 }, scene);
@@ -75,9 +81,10 @@ async function buildTrack(scene, chosenMap, onPhysicsReady) {
     await _loadGLB(scene, trackData, cp, onPhysicsReady, 'named8track.glb');
   } else if (chosenMap === 'hooked') {
     await _loadGLB(scene, trackData, cp, onPhysicsReady, 'hooked.glb');
+  } else if (chosenMap === 'custom' && customTrackURL) {
+    await _loadGLB(scene, trackData, cp, onPhysicsReady, customTrackURL);
   } else {
-    // default: oval
-    _buildOval(scene, trackData, cp);
+    // Fallback: empty track with default spawn
     _waitPhysicsTicks(scene, 4, () => onPhysicsReady(trackData));
   }
 
@@ -88,9 +95,14 @@ async function buildTrack(scene, chosenMap, onPhysicsReady) {
 async function _loadGLB(scene, trackData, cpFallback, onPhysicsReady, filename) {
   const B = BABYLON;
 
+  // Support blob: URLs (imported files) as well as plain filenames
+  const isBlobOrAbsolute = filename.startsWith('blob:') || filename.startsWith('http');
+  const rootUrl  = isBlobOrAbsolute ? ''        : '';
+  const fileUrl  = isBlobOrAbsolute ? filename  : filename;
+
   try {
     const result = await B.SceneLoader.ImportMeshAsync(
-      '', '', filename, scene, null, '.glb'
+      '', rootUrl, fileUrl, scene, null, '.glb'
     );
 
     console.log('[Track] GLB nodes:', result.meshes.map(m =>
