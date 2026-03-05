@@ -340,7 +340,14 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
 .sp-section-title.green{color:#00ff88;border-color:rgba(0,255,136,0.15);}
 .sp-section-title.yellow{color:#ffe600;border-color:rgba(255,230,0,0.15);}
 .sp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
-.sp-label{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.7);font-family:'Share Tech Mono',monospace;flex:1;}
+.sp-label{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.7);font-family:'Share Tech Mono',monospace;flex:1;cursor:default;}
+.sp-label[data-tip]{text-decoration:underline;text-decoration-style:dotted;text-decoration-color:rgba(255,255,255,0.22);text-underline-offset:3px;}
+.sp-label[data-tip]:hover{color:#fff;}
+#sp-tooltip{position:fixed;z-index:9999;pointer-events:none;width:256px;padding:13px 15px;background:rgba(4,4,10,0.97);border:1px solid rgba(255,255,255,0.09);border-left:2px solid #ff7722;opacity:0;transition:opacity 0.12s;}
+#sp-tooltip.vis{opacity:1;}
+#sp-tt-name{font-size:9px;letter-spacing:4px;color:#ff7722;font-family:'Share Tech Mono',monospace;margin-bottom:7px;}
+#sp-tt-desc{font-size:10px;color:rgba(255,255,255,0.52);font-family:'Share Tech Mono',monospace;line-height:1.75;letter-spacing:0.3px;margin-bottom:8px;}
+#sp-tt-def{font-size:8px;letter-spacing:3px;color:rgba(255,255,255,0.22);font-family:'Share Tech Mono',monospace;border-top:1px solid rgba(255,255,255,0.07);padding-top:7px;}
 .sp-val{font-size:13px;font-weight:900;color:#fff;font-family:'Share Tech Mono',monospace;width:68px;text-align:right;}
 .sp-hint{font-size:8px;letter-spacing:1px;color:rgba(255,100,20,0.5);font-family:'Share Tech Mono',monospace;margin-bottom:3px;line-height:1.4;}
 .sp-hint.cyan{color:rgba(0,229,255,0.45);}
@@ -356,7 +363,26 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
 .sp-slider.yellow::-webkit-slider-thumb{background:#ffe600;box-shadow:0 0 8px #ffe600;}
 .sp-slider.yellow::-moz-range-thumb{background:#ffe600;box-shadow:0 0 8px #ffe600;}
 
-/* ── Import modal ────────────────────────────────────────── */
+/* ── Settings toggle ─────────────────────────────────────── */
+.sp-toggle{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;}
+.sp-toggle input{opacity:0;width:0;height:0;position:absolute;}
+.sp-toggle-track{
+  position:absolute;inset:0;background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.15);cursor:pointer;
+  transition:background 0.2s,border-color 0.2s;
+}
+.sp-toggle input:checked + .sp-toggle-track{
+  background:rgba(255,230,0,0.2);border-color:rgba(255,230,0,0.5);
+}
+.sp-toggle-thumb{
+  position:absolute;top:3px;left:3px;width:12px;height:12px;
+  background:rgba(255,255,255,0.3);transition:transform 0.2s,background 0.2s;
+}
+.sp-toggle input:checked + .sp-toggle-track .sp-toggle-thumb{
+  transform:translateX(16px);background:#ffe600;
+  box-shadow:0 0 6px #ffe600;
+}
+
 #import-modal{
   position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;
   display:none;align-items:center;justify-content:center;
@@ -778,112 +804,132 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
 
   <div class="sp-section">
     <div class="sp-section-title">MASS & DISTRIBUTION</div>
-    <div class="sp-row"><span class="sp-label">TOTAL MASS</span><span class="sp-val" id="v-mass">700 kg</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="mass">TOTAL MASS</span><span class="sp-val" id="v-mass">700 kg</span></div>
     <div class="sp-hint">200–2800 kg · stock varies per car</div>
     <input type="range" class="sp-slider" id="s-mass" min="200" max="2800" value="700" step="10">
-    <div class="sp-row"><span class="sp-label">FRONT BIAS %</span><span class="sp-val" id="v-bias">45</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="bias">FRONT BIAS %</span><span class="sp-val" id="v-bias">45</span></div>
     <div class="sp-hint">15–85% · lower = more oversteer</div>
     <input type="range" class="sp-slider green" id="s-bias" min="15" max="85" value="45" step="1">
   </div>
 
   <div class="sp-section">
     <div class="sp-section-title">TIRE MODEL (PACEJKA)</div>
-    <div class="sp-row"><span class="sp-label">STIFFNESS (B)</span><span class="sp-val" id="v-B">10.0</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="pac-b">STIFFNESS (B)</span><span class="sp-val" id="v-B">10.0</span></div>
     <div class="sp-hint">2–40 · higher = sharper slip peak</div>
     <input type="range" class="sp-slider" id="s-B" min="2" max="40" value="10" step="0.5">
-    <div class="sp-row"><span class="sp-label">SHAPE (C)</span><span class="sp-val" id="v-C">1.90</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="pac-c">SHAPE (C)</span><span class="sp-val" id="v-C">1.90</span></div>
     <div class="sp-hint">0.5–5.0 · higher = rounder curve</div>
     <input type="range" class="sp-slider" id="s-C" min="0.5" max="5.0" value="1.9" step="0.05">
-    <div class="sp-row"><span class="sp-label">PEAK GRIP (D)</span><span class="sp-val" id="v-D">1.00</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="pac-d">PEAK GRIP (D)</span><span class="sp-val" id="v-D">1.00</span></div>
     <div class="sp-hint">0.2–4.0 · scales all lateral force</div>
     <input type="range" class="sp-slider" id="s-D" min="0.2" max="4.0" value="1.0" step="0.05">
-    <div class="sp-row"><span class="sp-label">CURVATURE (E)</span><span class="sp-val" id="v-E">0.97</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="pac-e">CURVATURE (E)</span><span class="sp-val" id="v-E">0.97</span></div>
     <div class="sp-hint">0.05–3.0 · >1 = wider plateau</div>
     <input type="range" class="sp-slider green" id="s-E" min="0.05" max="3.0" value="0.97" step="0.01">
   </div>
 
   <div class="sp-section">
     <div class="sp-section-title">SUSPENSION</div>
-    <div class="sp-row"><span class="sp-label">SPRING RATE</span><span class="sp-val" id="v-spring">32000</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="spring">SPRING RATE</span><span class="sp-val" id="v-spring">32000</span></div>
     <div class="sp-hint">4000–160000</div>
     <input type="range" class="sp-slider" id="s-spring" min="4000" max="160000" value="32000" step="1000">
-    <div class="sp-row"><span class="sp-label">DAMPER</span><span class="sp-val" id="v-damper">2400</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="damper">DAMPER</span><span class="sp-val" id="v-damper">2400</span></div>
     <div class="sp-hint">200–12000</div>
     <input type="range" class="sp-slider" id="s-damper" min="200" max="12000" value="2400" step="100">
   </div>
 
   <div class="sp-section">
     <div class="sp-section-title">ENGINE</div>
-    <div class="sp-row"><span class="sp-label">ENGINE FORCE</span><span class="sp-val" id="v-eng">7200</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="eng">ENGINE FORCE</span><span class="sp-val" id="v-eng">7200</span></div>
     <div class="sp-hint">1000–40000 N</div>
     <input type="range" class="sp-slider" id="s-eng" min="1000" max="40000" value="7200" step="100">
-    <div class="sp-row"><span class="sp-label">TIRE COMPOUND REAR</span><span class="sp-val" id="v-rgrip">0.65</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="brkf">BRAKE FORCE</span><span class="sp-val" id="v-brkf">10000</span></div>
+    <div class="sp-hint">1000–30000 N · all-wheel braking pressure</div>
+    <input type="range" class="sp-slider" id="s-brkf" min="1000" max="30000" value="10000" step="100">
+    <div class="sp-row"><span class="sp-label" data-tip="finaldrive">FINAL DRIVE</span><span class="sp-val" id="v-finaldrive">3.90</span></div>
+    <div class="sp-hint">1.5–6.0 · higher = more torque, lower top speed</div>
+    <input type="range" class="sp-slider" id="s-finaldrive" min="1.5" max="6.0" value="3.9" step="0.05">
+    <div class="sp-row"><span class="sp-label" data-tip="fgrip">TIRE COMPOUND FRONT</span><span class="sp-val" id="v-fgrip">1.00</span></div>
+    <div class="sp-hint">0.15–2.0 · front axle grip coefficient</div>
+    <input type="range" class="sp-slider green" id="s-fgrip" min="0.15" max="2.0" value="1.0" step="0.01">
+    <div class="sp-row"><span class="sp-label" data-tip="rgrip">TIRE COMPOUND REAR</span><span class="sp-val" id="v-rgrip">0.65</span></div>
     <div class="sp-hint">0.15–2.0 · rear axle grip coefficient</div>
     <input type="range" class="sp-slider green" id="s-rgrip" min="0.15" max="2.0" value="0.65" step="0.01">
   </div>
 
   <div class="sp-section">
     <div class="sp-section-title cyan">DYNAMICS</div>
-    <div class="sp-row"><span class="sp-label">ANGULAR DAMPING</span><span class="sp-val" id="v-angdamp">0.30</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="angdamp">ANGULAR DAMPING</span><span class="sp-val" id="v-angdamp">0.30</span></div>
     <div class="sp-hint cyan">0–2.0 · chassis rotational drag</div>
     <input type="range" class="sp-slider cyan" id="s-angdamp" min="0" max="2.0" value="0.30" step="0.01">
-    <div class="sp-row"><span class="sp-label">LINEAR DAMPING</span><span class="sp-val" id="v-lindamp">0.04</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="lindamp">LINEAR DAMPING</span><span class="sp-val" id="v-lindamp">0.04</span></div>
     <div class="sp-hint cyan">0–0.5 · global velocity drag</div>
     <input type="range" class="sp-slider cyan" id="s-lindamp" min="0" max="0.5" value="0.04" step="0.005">
-    <div class="sp-row"><span class="sp-label">STEER RETURN</span><span class="sp-val" id="v-sret">3.0</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="sret">STEER RETURN</span><span class="sp-val" id="v-sret">3.0</span></div>
     <div class="sp-hint cyan">0.5–12 · self-aligning torque speed</div>
     <input type="range" class="sp-slider cyan" id="s-sret" min="0.5" max="12" value="3.0" step="0.1">
-    <div class="sp-row"><span class="sp-label">STEER INPUT SPD</span><span class="sp-val" id="v-sspd">3.0</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="sspd">STEER INPUT SPD</span><span class="sp-val" id="v-sspd">3.0</span></div>
     <div class="sp-hint cyan">0.5–10 · steering rack speed</div>
     <input type="range" class="sp-slider cyan" id="s-sspd" min="0.5" max="10" value="3.0" step="0.1">
-    <div class="sp-row"><span class="sp-label">STEER MAX (rad)</span><span class="sp-val" id="v-smax">0.44</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="smax">STEER MAX (rad)</span><span class="sp-val" id="v-smax">0.44</span></div>
     <div class="sp-hint cyan">0.10–1.0 · lock-to-lock range</div>
     <input type="range" class="sp-slider cyan" id="s-smax" min="0.10" max="1.0" value="0.44" step="0.01">
-    <div class="sp-row"><span class="sp-label">SLIP ANGLE THRESHOLD</span><span class="sp-val" id="v-dthresh">0.10</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="dthresh">SLIP ANGLE THRESHOLD</span><span class="sp-val" id="v-dthresh">0.10</span></div>
     <div class="sp-hint cyan">0.01–0.5 · rad · slide detection threshold</div>
     <input type="range" class="sp-slider cyan" id="s-dthresh" min="0.01" max="0.5" value="0.10" step="0.01">
-    <div class="sp-row"><span class="sp-label">WEIGHT TRANSFER SCALE</span><span class="sp-val" id="v-latscale">0.38</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="latscale">WEIGHT TRANSFER SCALE</span><span class="sp-val" id="v-latscale">0.38</span></div>
     <div class="sp-hint cyan">0–1.0 · lateral load transfer coefficient</div>
     <input type="range" class="sp-slider cyan" id="s-latscale" min="0" max="1.0" value="0.38" step="0.01">
-    <div class="sp-row"><span class="sp-label">CG HEIGHT</span><span class="sp-val" id="v-cgheight">0.44</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="cgheight">CG HEIGHT</span><span class="sp-val" id="v-cgheight">0.44</span></div>
     <div class="sp-hint cyan">0.2–1.2 m · centre of gravity height</div>
     <input type="range" class="sp-slider cyan" id="s-cgheight" min="0.2" max="1.2" value="0.44" step="0.01">
-    <div class="sp-row"><span class="sp-label">HANDBRAKE FORCE</span><span class="sp-val" id="v-hbforce">24000</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="hbforce">HANDBRAKE FORCE</span><span class="sp-val" id="v-hbforce">24000</span></div>
     <div class="sp-hint cyan">1000–60000 N · rear brake line pressure</div>
     <input type="range" class="sp-slider cyan" id="s-hbforce" min="1000" max="60000" value="24000" step="500">
-    <div class="sp-row"><span class="sp-label">LOCKED WHEEL μk</span><span class="sp-val" id="v-hbmuk">0.92</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="hbmuk">LOCKED WHEEL μk</span><span class="sp-val" id="v-hbmuk">0.92</span></div>
     <div class="sp-hint cyan">0.1–1.5 · kinetic friction coefficient</div>
     <input type="range" class="sp-slider cyan" id="s-hbmuk" min="0.1" max="1.5" value="0.92" step="0.01">
-    <div class="sp-row"><span class="sp-label">MAX YAW RATE</span><span class="sp-val" id="v-avcap">3.8</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="avcap">MAX YAW RATE</span><span class="sp-val" id="v-avcap">3.8</span></div>
     <div class="sp-hint cyan">0.5–10 rad/s · chassis rotational inertia limit</div>
     <input type="range" class="sp-slider cyan" id="s-avcap" min="0.5" max="10" value="3.8" step="0.1">
   </div>
 
   <div class="sp-section">
     <div class="sp-section-title green">AERODYNAMICS</div>
-    <div class="sp-row"><span class="sp-label">DRAG COEFF</span><span class="sp-val" id="v-drag">0.48</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="drag">DRAG COEFF</span><span class="sp-val" id="v-drag">0.48</span></div>
     <div class="sp-hint green">0–2.0 · top speed limiter</div>
     <input type="range" class="sp-slider green" id="s-drag" min="0" max="2.0" value="0.48" step="0.01">
-    <div class="sp-row"><span class="sp-label">DOWNFORCE COEFF</span><span class="sp-val" id="v-df">0.30</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="df">DOWNFORCE COEFF</span><span class="sp-val" id="v-df">0.30</span></div>
     <div class="sp-hint green">0–2.0</div>
     <input type="range" class="sp-slider green" id="s-df" min="0" max="2.0" value="0.30" step="0.01">
-    <div class="sp-row"><span class="sp-label">DF ONSET KMH</span><span class="sp-val" id="v-dfmin">60</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="dfmin">DF ONSET KMH</span><span class="sp-val" id="v-dfmin">60</span></div>
     <div class="sp-hint green">0–200 kmh · ramps in above this</div>
     <input type="range" class="sp-slider green" id="s-dfmin" min="0" max="200" value="60" step="5">
   </div>
 
   <div class="sp-section" id="attessa-section" style="display:none">
     <div class="sp-section-title yellow">ATTESSA · TORQUE TRANSFER</div>
-    <div class="sp-row"><span class="sp-label">MAX FRONT SPLIT</span><span class="sp-val" id="v-attessa-max">50%</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="attessa-max">MAX FRONT SPLIT</span><span class="sp-val" id="v-attessa-max">50%</span></div>
     <div class="sp-hint yellow">0–100% · max torque to fronts</div>
     <input type="range" class="sp-slider yellow" id="s-attessa-max" min="0" max="1.0" value="0.50" step="0.01">
-    <div class="sp-row"><span class="sp-label">SLIP THRESHOLD</span><span class="sp-val" id="v-attessa-thr">0.18</span></div>
+    <div class="sp-row" style="margin-top:12px;margin-bottom:4px">
+      <span class="sp-label">FORCE FULL AWD</span>
+      <label class="sp-toggle">
+        <input type="checkbox" id="s-attessa-lock">
+        <span class="sp-toggle-track"><span class="sp-toggle-thumb"></span></span>
+      </label>
+    </div>
+    <div class="sp-hint yellow" style="margin-bottom:12px">Bypass slip threshold — lock to max front split</div>
+    <div id="attessa-sliders">
+    <div class="sp-row"><span class="sp-label" data-tip="attessa-thr">SLIP THRESHOLD</span><span class="sp-val" id="v-attessa-thr">0.18</span></div>
     <div class="sp-hint yellow">0–0.5 · rear slip that triggers AWD</div>
     <input type="range" class="sp-slider yellow" id="s-attessa-thr" min="0" max="0.5" value="0.18" step="0.01">
-    <div class="sp-row"><span class="sp-label">RESPONSE SPEED</span><span class="sp-val" id="v-attessa-resp">0.12</span></div>
+    <div class="sp-row"><span class="sp-label" data-tip="attessa-resp">RESPONSE SPEED</span><span class="sp-val" id="v-attessa-resp">0.12</span></div>
     <div class="sp-hint yellow">0.01–0.5 · transfer lerp speed</div>
     <input type="range" class="sp-slider yellow" id="s-attessa-resp" min="0.01" max="0.5" value="0.12" step="0.01">
+    </div>
   </div>
+
 
   <div class="sp-section">
     <div class="sp-section-title" style="color:#fff;border-color:rgba(255,255,255,0.15)">EXPORT VALUES</div>
@@ -956,6 +1002,8 @@ body{background:#000;overflow:hidden;font-family:'Barlow Condensed',sans-serif}
     </div>
   </div>
 </div>
+
+<div id="sp-tooltip"><div id="sp-tt-name"></div><div id="sp-tt-desc"></div><div id="sp-tt-def"></div></div>
 
 <!-- ── Game canvas ─────────────────────────────────────────── -->
 <canvas id="c"></canvas>

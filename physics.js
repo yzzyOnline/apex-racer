@@ -30,6 +30,8 @@ class RaycastVehicle {
     this.ENG_F          = 7800;
     this.BRK_F          = 10000;
     this.HBRK_F         = 24000;
+    this.BRAKE_BIAS     = 0.60;
+    this.ANTI_ROLL      = 1.0;
     this.STEER_MAX      = 0.44;
     this.STEER_SPD      = 3.0;
     this.STEER_RET      = 3.0;
@@ -71,6 +73,7 @@ class RaycastVehicle {
     this.ATTESSA_SLIP_THRESHOLD = 0.18;
     this.ATTESSA_RESPONSE       = 0.12;
     this.attessaCurrentSplit    = 0.0;
+    this.attessaForceLock       = false;
 
     this.gearRatios = [3.8, 2.6, 1.8, 1.32, 1.0, 0.78];
     this.finalDrive = 3.9;
@@ -170,7 +173,7 @@ class RaycastVehicle {
     const ltLong = this.MASS * Math.max(-20, Math.min(20, longAcc))
                    * this.CG_HEIGHT / this.WHEELBASE;
     const ltLat  = this.MASS * Math.max(-15, Math.min(15, latAcc))
-                   * this.CG_HEIGHT / this.TRACK_WIDTH;
+                   * this.CG_HEIGHT / this.TRACK_WIDTH * this.ANTI_ROLL;
 
     const bl0 = Math.max(0, staticFront / 2 - ltLong / 2 - ltLat / 2);
     const bl1 = Math.max(0, staticFront / 2 - ltLong / 2 + ltLat / 2);
@@ -427,7 +430,8 @@ class RaycastVehicle {
 
     if (inp.brake) {
       if (!this._reversing && longVel > 0.4) {
-        longF -= this.BRK_F / 4;
+        const biasShare = isFront ? this.BRAKE_BIAS : (1.0 - this.BRAKE_BIAS);
+        longF -= this.BRK_F * biasShare / 2;
       } else {
         this._reversing = true;
         longF -= this.ENG_F * 0.75 * driveShare;
@@ -452,6 +456,11 @@ class RaycastVehicle {
     if (inp.handbrake) {
       this.attessaCurrentSplit = 0.0;
       this.attessaSplitLive    = 0.0;
+      return;
+    }
+    if (this.attessaForceLock) {
+      this.attessaCurrentSplit = this.ATTESSA_MAX_FRONT;
+      this.attessaSplitLive    = this.ATTESSA_MAX_FRONT;
       return;
     }
     const rearSlip = (Math.abs(this.slipAngles[2] || 0)
